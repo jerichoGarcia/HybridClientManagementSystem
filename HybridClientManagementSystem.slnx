@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Api/">
+    <Project Path="Api/ClientManagement.Api/ClientManagement.Api.csproj" />
+  </Folder>
+  <Folder Name="/Desktop/">
+    <Project Path="Desktop/ClientManagement.Desktop/ClientManagement.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/ClientManagement.Shared/ClientManagement.Shared.csproj" />
+  </Folder>
+</Solution>

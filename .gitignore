@@ -1,0 +1,34 @@
+# Visual Studio / .NET
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+
+# Environment / secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# ASP.NET Core configuration with secrets
+**/appsettings.json
+**/appsettings.Development.json
+**/appsettings.Local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
