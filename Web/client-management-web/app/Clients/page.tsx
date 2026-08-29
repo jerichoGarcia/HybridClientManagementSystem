@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ClientStatus {
   id: number;
@@ -35,6 +36,9 @@ interface ClientForm {
 const API_URL = "http://localhost:5110/api/Clients";
 
 export default function ClientsPage() {
+
+  const router = useRouter();
+
   // --------------------------------------------------
   // CLIENT DATA
   // --------------------------------------------------
@@ -349,7 +353,7 @@ export default function ClientsPage() {
         <div className="mb-6 rounded-xl bg-white p-4 shadow-sm">
           <label
             htmlFor="client-search"
-            className="mb-2 block text-sm font-medium text-black-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
             Search Clients
           </label>
@@ -467,6 +471,7 @@ export default function ClientsPage() {
                       <td className="px-6 py-4 text-right">
                         <button
                           type="button"
+                          onClick={() => { router.push(`/Clients/${client.id}`); }}
                           className="font-medium text-blue-600 hover:text-blue-800"
                         >
                           View
@@ -576,7 +581,7 @@ export default function ClientsPage() {
                     onChange={handleChange}
                     required
                     placeholder="Juan"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
                   />
                 </div>
 
@@ -597,7 +602,7 @@ export default function ClientsPage() {
                     onChange={handleChange}
                     required
                     placeholder="Dela Cruz"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
                   />
                 </div>
 
@@ -617,7 +622,7 @@ export default function ClientsPage() {
                     value={form.middleName}
                     onChange={handleChange}
                     placeholder="Santos"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
                   />
                 </div>
 
@@ -637,7 +642,7 @@ export default function ClientsPage() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="juan@example.com"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
                   />
                 </div>
 
@@ -657,7 +662,7 @@ export default function ClientsPage() {
                     value={form.phoneNumber}
                     onChange={handleChange}
                     placeholder="09171234567"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
                   />
                 </div>
 
@@ -677,7 +682,7 @@ export default function ClientsPage() {
                     value={form.address}
                     onChange={handleChange}
                     placeholder="Quezon City, Philippines"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
                   />
                 </div>
 
