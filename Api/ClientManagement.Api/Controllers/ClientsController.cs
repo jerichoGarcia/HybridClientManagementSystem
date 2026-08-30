@@ -89,4 +89,59 @@ public class ClientsController : ControllerBase
         client
         );
     }
+    // PUT: api/clients/5
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateClient(
+        int id,
+        UpdateClientDto dto)
+    {
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(client => client.Id == id);
+
+        if (client == null)
+        {
+            return NotFound(new
+            {
+                message = "Client not found."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.FirstName))
+        {
+            return BadRequest(new
+            {
+                message = "First Name is required."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.LastName))
+        {
+            return BadRequest(new
+            {
+                message = "Last Name is required."
+            });
+        }
+
+        client.FirstName = dto.FirstName.Trim();
+        client.LastName = dto.LastName.Trim();
+        client.MiddleName = string.IsNullOrWhiteSpace(dto.MiddleName)
+            ? null
+            : dto.MiddleName.Trim();
+
+        client.Email = string.IsNullOrWhiteSpace(dto.Email)
+            ? null
+            : dto.Email.Trim();
+
+        client.PhoneNumber = string.IsNullOrWhiteSpace(dto.PhoneNumber)
+            ? null
+            : dto.PhoneNumber.Trim();
+
+        client.Address = string.IsNullOrWhiteSpace(dto.Address)
+            ? null
+            : dto.Address.Trim();
+
+        await _context.SaveChangesAsync();
+
+        return Ok(client);
+    }
 }
