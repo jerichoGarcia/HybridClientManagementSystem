@@ -82,6 +82,7 @@ export default function ClientProfilePage() {
   email: "",
   phoneNumber: "",
   address: "",
+  statusId: 1, // Default to Active
   });
 
   const clientId = params.id;
@@ -203,6 +204,7 @@ export default function ClientProfilePage() {
     email: client.email || "",
     phoneNumber: client.phoneNumber || "",
     address: client.address || "",
+    statusId: client.statusId || 1, // Default to Active
   });
 
   setShowEditForm(true);
@@ -259,6 +261,7 @@ export default function ClientProfilePage() {
               editForm.phoneNumber.trim() || null,
             address:
               editForm.address.trim() || null,
+            statusId: editForm.statusId,
           }),
         }
       );
@@ -837,6 +840,30 @@ export default function ClientProfilePage() {
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
                   />
                 </div>
+
+                {/* STATUS */}
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="edit-status"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Status
+                  </label>
+
+                  <select
+                    id="edit-status"
+                    name="statusId"
+                    value={editForm.statusId}
+                    onChange={event => setEditForm(prev => ({ ...prev, statusId: parseInt(event.target.value) }))}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  >
+                    <option value={1}>Active</option>
+                    <option value={2}>Inactive</option>
+                    <option value={3}>Pending</option>
+                    <option value={4}>Archived</option>
+                  </select>
+                </div>
+
               </div>
               
               {/* BUTTONS */}
@@ -860,7 +887,7 @@ export default function ClientProfilePage() {
               </div>
 
             </form>
-            
+
           </div>
         </div>
       )}

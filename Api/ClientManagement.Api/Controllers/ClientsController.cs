@@ -140,8 +140,48 @@ public class ClientsController : ControllerBase
             ? null
             : dto.Address.Trim();
 
+        client.StatusId = dto.StatusId;
         await _context.SaveChangesAsync();
 
         return Ok(client);
+    }
+
+    // PUT: api/clients/5/status
+    [HttpPut("{id:int}/status")]
+    public async Task<IActionResult> UpdateClientStatus(
+        int id,
+        [FromBody] int statusId)
+    {
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(client => client.Id == id);
+
+        if (client == null)
+        {
+            return NotFound(new
+            {
+                message = "Client not found."
+            });
+        }
+
+        var statusExists = await _context.ClientStatuses
+            .AnyAsync(status => status.Id == statusId);
+
+        if (!statusExists)
+        {
+            return BadRequest(new
+            {
+                message = "Invalid client status."
+            });
+        }
+
+        client.StatusId = statusId;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Client status updated successfully.",
+            statusId = client.StatusId
+        });
     }
 }
