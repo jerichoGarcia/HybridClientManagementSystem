@@ -72,6 +72,17 @@ export default function ClientProfilePage() {
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [editForm, setEditForm] = useState({
+  firstName: "",
+  lastName: "",
+  middleName: "",
+  email: "",
+  phoneNumber: "",
+  address: "",
+  });
 
   const clientId = params.id;
 
@@ -180,6 +191,117 @@ export default function ClientProfilePage() {
     return parsedDate.toLocaleString();
   };
 
+  const openEditForm = () => {
+  if (!client) {
+    return;
+  }
+
+  setEditForm({
+    firstName: client.firstName || "",
+    lastName: client.lastName || "",
+    middleName: client.middleName || "",
+    email: client.email || "",
+    phoneNumber: client.phoneNumber || "",
+    address: client.address || "",
+  });
+
+  setShowEditForm(true);
+  };
+
+  const handleEditChange = (
+  event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = event.target;
+
+    setEditForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const handleUpdateClient = async (
+  event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!client) {
+      return;
+    }
+
+    if (!editForm.firstName.trim()) {
+      alert("First Name is required.");
+      return;
+    }
+
+    if (!editForm.lastName.trim()) {
+      alert("Last Name is required.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await fetch(
+        `${API_URL}/${client.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName: editForm.firstName.trim(),
+            lastName: editForm.lastName.trim(),
+            middleName:
+              editForm.middleName.trim() || null,
+            email:
+              editForm.email.trim() || null,
+            phoneNumber:
+              editForm.phoneNumber.trim() || null,
+            address:
+              editForm.address.trim() || null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+
+        console.error(
+          "Update client failed:",
+          errorMessage
+        );
+
+        throw new Error("Failed to update client.");
+      }
+
+      const updatedClient: Client =
+        await response.json();
+
+      setClient((previous) => {
+        if (!previous) {
+          return updatedClient;
+        }
+
+        return {
+          ...previous,
+          ...updatedClient,
+        };
+      });
+
+      setShowEditForm(false);
+
+      alert("Client updated successfully.");
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        "Unable to update client. Please check that the API is running."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // --------------------------------------------------
   // LOADING
   // --------------------------------------------------
@@ -269,12 +391,23 @@ export default function ClientProfilePage() {
               {client.clientNumber}
             </p>
           </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={openEditForm}
+              className="rounded-lg bg-black px-5 py-2.5 font-medium text-white transition hover:bg-gray-800"
+            >
+              Edit Client
+            </button>
 
-          <span
-            className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${getStatusClass()}`}
-          >
-            {getStatusName()}
-          </span>
+            <span
+              className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${getStatusClass()}`}
+              >
+                {getStatusName()}
+            </span>
+
+          </div>
 
         </div>
 
@@ -559,6 +692,178 @@ export default function ClientProfilePage() {
         </section>
 
       </div>
+
+      {showEditForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            
+            {/* MODAL HEADER */}
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Edit Client
+                </h2>
+
+                <p className="mt-1 text-gray-500">
+                  Update the client&apos; information below.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowEditForm(false)}
+                disabled={saving}
+                className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
+              >
+                *
+              </button>
+            </div>
+
+            {/* FORM */}
+
+            <form onSubmit={handleUpdateClient}>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+                {/* FIRST NAME */}
+
+                <div>
+                  <label
+                    htmlFor="edit-firstName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    First Name
+                  </label>
+
+                  <input
+                    type="text"
+                    id="edit-firstName"
+                    name="firstName"
+                    value={editForm.firstName}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+                </div>
+
+                {/* LAST NAME */}
+                <div>
+                  <label
+                    htmlFor="edit-lastName"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Last Name
+                  </label>
+
+                  <input
+                    type="text"
+                    id="edit-lastName"
+                    name="lastName"
+                    value={editForm.lastName}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+                </div>
+
+                {/* MIDDLE NAME */}
+                <div>
+                  <label
+                    htmlFor="edit-middleName"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Middle Name
+                  </label>
+
+                  <input
+                    type="text"
+                    id="edit-middleName"
+                    name="middleName"
+                    value={editForm.middleName}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <label
+                    htmlFor="edit-email"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="edit-email"
+                    name="email"
+                    value={editForm.email}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+                </div>
+
+                {/* PHONE NUMBER */}
+                <div>
+                  <label
+                    htmlFor="edit-phoneNumber"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="edit-phoneNumber"
+                    name="phoneNumber"
+                    value={editForm.phoneNumber}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+                </div>
+
+                {/* ADDRESS */}
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="edit-address"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-address"
+                    name="address"
+                    value={editForm.address}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+                </div>
+              </div>
+              
+              {/* BUTTONS */}
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditForm(false)}
+                  disabled={saving}
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg border border-transparent bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+
+              </div>
+
+            </form>
+            
+          </div>
+        </div>
+      )}
     </main>
   );
 }
