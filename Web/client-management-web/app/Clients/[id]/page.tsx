@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 interface ClientStatus {
@@ -84,6 +84,32 @@ export default function ClientProfilePage() {
   address: "",
   statusId: 1, // Default to Active
   });
+
+  // CONTACT MANAGEMENT
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactSaving, setContactSaving] = useState(false);
+
+  const [contactForm, setContactForm] = useState({
+    contactType: "Mobile",
+    contactValue: "",
+    isPrimary: false,
+  });
+
+  // Edit Contact
+  const [showEditContactForm, setShowEditContactForm] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<number | null>(null);
+
+  const [editContactForm, setEditContactForm] = useState({
+    contactType: "Mobile",
+    contactValue: "",
+    isPrimary: false,
+  });
+
+  const [editContactSaving, setEditContactSaving] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<ClientContact | null>(null);
+  const [contactDeleting, setContactDeleting] = useState(false);
+  const [deleteContactError, setDeleteContactError] = useState("");
+  const deleteContactInProgress = useRef(false);
 
   const clientId = params.id;
 
@@ -277,23 +303,47 @@ export default function ClientProfilePage() {
         throw new Error("Failed to update client.");
       }
 
-      const updatedClient: Client =
-        await response.json();
-
       setClient((previous) => {
         if (!previous) {
-          return updatedClient;
+          return previous;
         }
 
         return {
           ...previous,
-          ...updatedClient,
+          firstName: editForm.firstName.trim(),
+          lastName: editForm.lastName.trim(),
+          middleName: editForm.middleName.trim() || null,
+          email: editForm.email.trim() || null,
+          phoneNumber: editForm.phoneNumber.trim() || null,
+          address: editForm.address.trim() || null,
+          statusId: editForm.statusId,
+          status: previous.statusId === editForm.statusId
+            ? previous.status
+            : null,
         };
       });
 
       setShowEditForm(false);
 
-      alert("Client updated successfully.");
+      try {
+        const refreshResponse = await fetch(
+          `${API_URL}/${client.id}`,
+          { cache: "no-store" }
+        );
+
+        if (!refreshResponse.ok) {
+          throw new Error("Failed to refresh client profile.");
+        }
+
+        const refreshedClient: Client = await refreshResponse.json();
+        setClient(refreshedClient);
+        alert("Client updated successfully.");
+      } catch (refreshError) {
+        console.error(refreshError);
+        alert(
+          "Client updated, but the profile could not be refreshed. Please reload the page."
+        );
+      }
     } catch (err) {
       console.error(err);
 
@@ -302,6 +352,316 @@ export default function ClientProfilePage() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  // --------------------------------------------------
+  // CONTACT MANAGEMENT
+  // --------------------------------------------------
+
+  const handleContactChange = (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = event.target;
+
+    if (type === "checkbox") {
+      const checked = (
+        event.target as HTMLInputElement
+      ).checked;
+
+      setContactForm((previous) => ({
+        ...previous,
+        [name]: checked,
+      }));
+
+      return;
+    }
+
+    setContactForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const resetContactForm = () => {
+    setContactForm({
+      contactType: "Mobile",
+      contactValue: "",
+      isPrimary: false,
+    });
+  };
+
+  const openEditContactForm = (contact: ClientContact) => {
+    setEditingContactId(contact.id);
+
+    setEditContactForm({
+      contactType: contact.contactType || "Mobile",
+      contactValue: contact.contactValue || "",
+      isPrimary: contact.isPrimary || false,
+    });
+    setShowEditContactForm(true);
+  };
+
+  const handleEditContactChange = (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = event.target;
+
+    if (type === "checkbox") {
+      const checked = (
+        event.target as HTMLInputElement
+      ).checked;
+
+      setEditContactForm((previous) => ({
+        ...previous,
+        [name]: checked,
+      }));
+
+      return;
+    }
+
+    setEditContactForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const handleUpdateContact = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!client || editingContactId === null) {
+      return;
+    }
+
+    if (!editContactForm.contactType.trim()) {
+      alert("Please select a contact type.");
+      return;
+    }
+
+    if (!editContactForm.contactValue.trim()) {
+      alert("Please enter a contact value.");
+      return;
+    }
+
+    try {
+      setEditContactSaving(true);
+
+      const response = await fetch(
+        `${API_URL}/${client.id}/contacts/${editingContactId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contactType:
+              editContactForm.contactType,
+            contactValue:
+              editContactForm.contactValue.trim(),
+            isPrimary:
+              editContactForm.isPrimary,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+
+        console.error(
+          "Update contact failed:",
+          errorMessage
+        );
+
+        throw new Error("Failed to update contact.");
+      }
+
+      const updatedContact: ClientContact =
+        await response.json();
+
+      setClient((previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        let updatedContacts =
+          (previous.contacts || []).map((contact) =>
+            contact.id === updatedContact.id
+              ? updatedContact
+              : contact
+          );
+
+        // Only one contact can be primary
+        if (updatedContact.isPrimary) {
+          updatedContacts = updatedContacts.map((contact) => ({
+            ...contact,
+            isPrimary: contact.id === updatedContact.id,
+          }));
+        }
+
+        return {
+          ...previous,
+          contacts: updatedContacts,
+        };
+      });
+
+      setShowEditContactForm(false);
+      setEditingContactId(null);
+
+      alert("Contact updated successfully.");
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        "Unable to update contact. Please check that the API is running."
+      );
+    } finally {
+      setEditContactSaving(false);
+    }
+  };
+
+  const handleDeleteContact = async () => {
+    if (!client || !contactToDelete || deleteContactInProgress.current) {
+      return;
+    }
+
+    deleteContactInProgress.current = true;
+    setContactDeleting(true);
+    setDeleteContactError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/${client.id}/contacts/${contactToDelete.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Delete contact failed (${response.status}).`);
+      }
+
+      setClient((previous) => previous ? {
+        ...previous,
+        contacts: (previous.contacts || []).filter(
+          (contact) => contact.id !== contactToDelete.id
+        ),
+      } : previous);
+      setContactToDelete(null);
+    } catch (err) {
+      console.error(err);
+      setDeleteContactError("Unable to delete contact. Please try again.");
+    } finally {
+      deleteContactInProgress.current = false;
+      setContactDeleting(false);
+    }
+  };
+
+  const closeContactForm = () => {
+    if (contactSaving) {
+      return;
+    }
+
+    setShowContactForm(false);
+    resetContactForm();
+  };
+
+  const handleAddContact = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!client) {
+      return;
+    }
+
+    if (!contactForm.contactType.trim()) {
+      alert("Please select a contact type.");
+      return;
+    }
+
+    if (!contactForm.contactValue.trim()) {
+      alert("Please enter a contact value.");
+      return;
+    }
+
+    try {
+      setContactSaving(true);
+
+      const response = await fetch(
+        `${API_URL}/${client.id}/contacts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contactType:
+              contactForm.contactType,
+            contactValue:
+              contactForm.contactValue.trim(),
+            isPrimary:
+              contactForm.isPrimary,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+
+        console.error(
+          "Add contact failed:",
+          errorMessage
+        );
+
+        throw new Error("Failed to add contact.");
+      }
+
+      const newContact: ClientContact =
+        await response.json();
+
+        setClient((previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        let updatedContacts = [
+          ...(previous.contacts || []),
+          newContact,
+        ];
+
+        // If the new contact is primary,
+        // make all other contacts non-primary.
+        if (newContact.isPrimary) {
+          updatedContacts =
+            updatedContacts.map((contact) => ({
+              ...contact,
+              isPrimary:
+                contact.id === newContact.id,
+            }));
+        }
+
+        return {
+          ...previous,
+          contacts: updatedContacts,
+        };
+      });
+
+      resetContactForm();
+      setShowContactForm(false);
+
+      alert("Contact added successfully.");
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        "Unable to add contact. Please check that the API is running."
+      );
+    } finally {
+      setContactSaving(false);
     }
   };
 
@@ -524,40 +884,83 @@ export default function ClientProfilePage() {
 
         <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
 
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
-            Contacts
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+
+            <h2 className="text-xl font-bold text-gray-900">
+              Contacts
+            </h2>
+
+            <button
+              type="button"
+              onClick={() => setShowContactForm(true)}
+              className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              + Add Contact
+            </button>
+
+          </div>
 
           {client.contacts &&
           client.contacts.length > 0 ? (
+
             <div className="space-y-3">
 
               {client.contacts.map((contact) => (
+
                 <div
                   key={contact.id}
-                  className="rounded-lg border border-gray-200 p-4"
+                  className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
                 >
-                  <p className="font-medium text-gray-900">
-                    {contact.contactType || "Contact"}
-                  </p>
 
-                  <p className="mt-1 text-gray-600">
-                    {contact.contactValue || "-"}
-                  </p>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {contact.contactType || "Contact"}
+                    </p>
 
-                  {contact.isPrimary && (
-                    <span className="mt-2 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                      Primary
-                    </span>
-                  )}
+                    <p className="mt-1 text-gray-600">
+                      {contact.contactValue || "-"}
+                    </p>
+
+                    {contact.isPrimary && (
+                      <span className="mt-2 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                        Primary
+                      </span>
+                    )}
+
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditContactForm(contact)}
+                      className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteContactError("");
+                        setContactToDelete(contact);
+                      }}
+                      className="rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
+
                 </div>
+
               ))}
 
             </div>
+
           ) : (
+
             <p className="text-gray-500">
               No contacts available.
             </p>
+
           )}
 
         </section>
@@ -891,6 +1294,349 @@ export default function ClientProfilePage() {
           </div>
         </div>
       )}
+      {showContactForm && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+
+            {/* MODAL HEADER */}
+
+            <div className="mb-6 flex items-start justify-between">
+
+              <div>
+
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Add Contact
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Add a contact method for this client.
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={closeContactForm}
+                disabled={contactSaving}
+                className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
+              >
+                ×
+              </button>
+
+            </div>
+
+            {/* CONTACT FORM */}
+
+            <form onSubmit={handleAddContact}>
+
+              <div className="space-y-5">
+
+                {/* CONTACT TYPE */}
+
+                <div>
+
+                  <label
+                    htmlFor="contactType"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Contact Type
+                  </label>
+
+                  <select
+                    id="contactType"
+                    name="contactType"
+                    value={contactForm.contactType}
+                    onChange={handleContactChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  >
+
+                    <option value="Mobile">
+                      Mobile
+                    </option>
+
+                    <option value="Email">
+                      Email
+                    </option>
+
+                    <option value="Landline">
+                      Landline
+                    </option>
+
+                    <option value="Work">
+                      Work
+                    </option>
+
+                    <option value="Other">
+                      Other
+                    </option>
+
+                  </select>
+
+                </div>
+
+                {/* CONTACT VALUE */}
+
+                <div>
+
+                  <label
+                    htmlFor="contactValue"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Contact Information
+                  </label>
+
+                  <input
+                    id="contactValue"
+                    name="contactValue"
+                    type="text"
+                    value={contactForm.contactValue}
+                    onChange={handleContactChange}
+                    required
+                    placeholder="09171234567"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                  />
+
+                </div>
+
+                {/* PRIMARY */}
+
+                <div className="flex items-center gap-3">
+
+                  <input
+                    id="isPrimary"
+                    name="isPrimary"
+                    type="checkbox"
+                    checked={contactForm.isPrimary}
+                    onChange={handleContactChange}
+                    className="h-4 w-4"
+                  />
+
+                  <label
+                    htmlFor="isPrimary"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Set as primary contact
+                  </label>
+
+                </div>
+
+              </div>
+
+              {/* BUTTONS */}
+
+              <div className="mt-8 flex justify-end gap-3">
+
+                <button
+                  type="button"
+                  onClick={closeContactForm}
+                  disabled={contactSaving}
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={contactSaving}
+                  className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {contactSaving
+                    ? "Saving..."
+                    : "Save Contact"}
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      )}
+      {contactToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-contact-title"
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2 id="delete-contact-title" className="text-2xl font-bold text-gray-900">
+              Delete Contact
+            </h2>
+            <p className="mt-4 text-gray-700">
+              Delete {contactToDelete.contactType || "Contact"}: {contactToDelete.contactValue || "-"}?
+            </p>
+            {deleteContactError && (
+              <p role="alert" className="mt-4 text-sm text-red-700">
+                {deleteContactError}
+              </p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setContactToDelete(null)}
+                disabled={contactDeleting}
+                className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteContact}
+                disabled={contactDeleting}
+                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {contactDeleting ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showEditContactForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+
+            {/* MODAL HEADER */}
+
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Edit Contact
+                </h2>
+
+                <p className="mt-1 text-gray-500">
+                  Update the contact information below.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowEditContactForm(false)}
+                disabled={editContactSaving}
+                className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* FORM */}
+
+            <form onSubmit={handleUpdateContact}>
+
+              {/* CONTACT TYPE */}
+
+              <div className="mb-5">
+                <label
+                  htmlFor="edit-contactType"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Contact Type
+                </label>
+
+                <select
+                  id="edit-contactType"
+                  name="contactType"
+                  value={editContactForm.contactType}
+                  onChange={handleEditContactChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                >
+                  <option value="Mobile">
+                    Mobile
+                  </option>
+
+                  <option value="Email">
+                    Email
+                  </option>
+
+                  <option value="Landline">
+                    Landline
+                  </option>
+
+                  <option value="Work">
+                  Work
+                  </option>
+
+                  <option value="Other">
+                    Other
+                  </option>
+                </select>
+              </div>
+
+              {/* CONTACT VALUE */}
+
+              <div className="mb-5">
+                <label
+                  htmlFor="edit-contactValue"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Contact Value
+                </label>
+
+                <input
+                  type="text"
+                  id="edit-contactValue"
+                  name="contactValue"
+                  value={editContactForm.contactValue}
+                  onChange={handleEditContactChange}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+                />
+              </div>
+
+              {/* PRIMARY */}
+
+              <div className="mb-6 flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="edit-isPrimary"
+                  name="isPrimary"
+                  checked={editContactForm.isPrimary}
+                  onChange={handleEditContactChange}
+                  className="h-4 w-4"
+                />
+
+                <label
+                  htmlFor="edit-isPrimary"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Set as primary contact
+                </label>
+              </div>
+
+              {/* BUTTONS */}
+
+              <div className="flex items-center justify-end gap-3">
+
+                <button
+                  type="button"
+                  onClick={() => setShowEditContactForm(false)}
+                  disabled={editContactSaving}
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={editContactSaving}
+                  className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed"
+                >
+                  {editContactSaving
+                    ? "Saving..."
+                    : "Save Changes"}
+                </button>
+
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
