@@ -350,7 +350,7 @@ export default function ClientsPage() {
         </div>
 
         {/* SEARCH */}
-        <div className="mb-6 rounded-xl bg-white p-4 shadow-sm">
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <label
             htmlFor="client-search"
             className="mb-2 block text-sm font-medium text-gray-700"
@@ -358,16 +358,51 @@ export default function ClientsPage() {
             Search Clients
           </label>
 
-          <input
-            id="client-search"
-            type="text"
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-            placeholder="Search by client number, name, email, or phone..."
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
-          />
+          <div className="relative">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+            >
+              <circle cx="11" cy="11" r="6" />
+              <path d="m16 16 4 4" />
+            </svg>
+
+            <input
+              id="client-search"
+              type="text"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search by client number, name, email, or phone..."
+              className="h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-12 text-base text-slate-900 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            />
+
+            {search && (
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setSearch("")}
+                aria-label="Clear client search"
+                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-5 w-5"
+                >
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ERROR */}

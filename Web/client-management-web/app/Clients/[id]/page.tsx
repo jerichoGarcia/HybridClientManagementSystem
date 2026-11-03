@@ -90,6 +90,35 @@ interface AddressFormFieldsProps {
   ) => void;
 }
 
+const PHONE_CONTACT_TYPES = new Set([
+  "mobile",
+  "landline",
+  "phone",
+  "telephone",
+  "work phone",
+  "work mobile",
+  "work landline",
+]);
+
+const isPhoneContact = (contact: ClientContact) =>
+  PHONE_CONTACT_TYPES.has((contact.contactType || "").trim().toLowerCase()) &&
+  Boolean(contact.contactValue?.trim());
+
+const formatPrimaryAddress = (address: ClientAddress) => {
+  const values = [
+    address.addressLine1,
+    address.addressLine2,
+    address.city,
+    address.province,
+    address.postalCode,
+    address.country,
+  ]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  return values.join(", ");
+};
+
 const ADDRESS_TYPES = ["Home", "Work", "Billing"] as const;
 const PHILIPPINES = "Philippines";
 const METRO_MANILA = "Metro Manila";
@@ -438,6 +467,19 @@ export default function ClientProfilePage() {
   const deleteAddressInProgress = useRef(false);
 
   const clientId = params.id;
+
+  const primaryPhoneContact = client?.contacts?.find(
+    (contact) => contact.isPrimary && isPhoneContact(contact)
+  );
+  const displayPhoneNumber = primaryPhoneContact?.contactValue?.trim() ||
+    client?.phoneNumber?.trim() || "-";
+  const primaryAddress = client?.addresses?.find(
+    (address) => address.isPrimary
+  );
+  const formattedPrimaryAddress = primaryAddress
+    ? formatPrimaryAddress(primaryAddress)
+    : "";
+  const displayAddress = formattedPrimaryAddress || client?.address?.trim() || "-";
 
   useEffect(() => {
     if (!clientId) {
@@ -1482,21 +1524,21 @@ export default function ClientProfilePage() {
 
             <div>
               <p className="text-sm font-medium text-gray-500">
-                Phone Number
+                {primaryPhoneContact ? "Primary Phone Number" : "Phone Number"}
               </p>
 
               <p className="mt-1 text-gray-900">
-                {client.phoneNumber || "-"}
+                {displayPhoneNumber}
               </p>
             </div>
 
             <div className="md:col-span-2">
               <p className="text-sm font-medium text-gray-500">
-                Address
+                {formattedPrimaryAddress ? "Primary Address" : "Address"}
               </p>
 
               <p className="mt-1 text-gray-900">
-                {client.address || "-"}
+                {displayAddress}
               </p>
             </div>
 
