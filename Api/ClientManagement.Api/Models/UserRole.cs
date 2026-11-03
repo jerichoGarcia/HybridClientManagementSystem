@@ -1,12 +1,10 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace ClientManagement.Api.Models;
 
-public class UserRole
+public class UserRole : IdentityUserRole<int>
 {
     public int Id { get; set; }
-
-    public int UserId { get; set; }
-
-    public int RoleId { get; set; }
 
     public User User { get; set; } = null!;
 

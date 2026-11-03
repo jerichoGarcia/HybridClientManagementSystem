@@ -1,9 +1,19 @@
 using ClientManagement.Api.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClientManagement.Api.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<
+    User,
+    Role,
+    int,
+    IdentityUserClaim<int>,
+    UserRole,
+    IdentityUserLogin<int>,
+    IdentityRoleClaim<int>,
+    IdentityUserToken<int>>
 {
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options)
@@ -23,15 +33,68 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<ClientActivityLog> ClientActivityLogs => Set<ClientActivityLog>();
 
-    public DbSet<User> Users => Set<User>();
-
-    public DbSet<Role> Roles => Set<Role>();
-
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
-    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<User>(user =>
+        {
+            user.ToTable("Users");
+            user.Property(existingUser => existingUser.UserName)
+                .HasColumnName("Username")
+                .HasColumnType("text")
+                .IsRequired();
+            user.Property(existingUser => existingUser.Email)
+                .HasColumnType("text");
+            user.Property(existingUser => existingUser.PasswordHash)
+                .HasColumnType("text")
+                .IsRequired();
+            user.Property(existingUser => existingUser.NormalizedUserName)
+                .HasColumnType("text");
+            user.Property(existingUser => existingUser.NormalizedEmail)
+                .HasColumnType("text");
+            user.HasIndex(existingUser => existingUser.NormalizedUserName)
+                .IsUnique();
+        });
+
+        modelBuilder.Entity<Role>(role =>
+        {
+            role.ToTable("Roles");
+            role.Property(existingRole => existingRole.Name)
+                .HasColumnType("text")
+                .IsRequired();
+            role.Property(existingRole => existingRole.NormalizedName)
+                .HasColumnType("text");
+            role.HasIndex(existingRole => existingRole.NormalizedName)
+                .IsUnique();
+        });
+
+        modelBuilder.Entity<UserRole>(userRole =>
+        {
+            userRole.ToTable("UserRoles");
+            userRole.HasKey(existingUserRole => new
+            {
+                existingUserRole.UserId,
+                existingUserRole.RoleId
+            });
+            userRole.Property(existingUserRole => existingUserRole.Id)
+                .ValueGeneratedOnAdd();
+            userRole.HasIndex(existingUserRole => existingUserRole.Id)
+                .IsUnique();
+            userRole.HasOne(existingUserRole => existingUserRole.User)
+                .WithMany(existingUser => existingUser.UserRoles)
+                .HasForeignKey(existingUserRole => existingUserRole.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            userRole.HasOne(existingUserRole => existingUserRole.Role)
+                .WithMany(existingRole => existingRole.UserRoles)
+                .HasForeignKey(existingUserRole => existingUserRole.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");
+        modelBuilder.Entity<IdentityUserLogin<int>>().ToTable("UserLogins");
+        modelBuilder.Entity<IdentityUserToken<int>>().ToTable("UserTokens");
+        modelBuilder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims");
 
         // unique client number
         modelBuilder.Entity<Client>()
@@ -73,24 +136,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(log => log.ClientId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserRole relationship
-        modelBuilder.Entity<UserRole>()
-            .HasOne(userRole => userRole.User)
-            .WithMany(user => user.UserRoles)
-            .HasForeignKey(userRole => userRole.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Role relationship
-        modelBuilder.Entity<UserRole>()
-            .HasOne(userRole => userRole.Role)
-            .WithMany(role => role.UserRoles)
-            .HasForeignKey(userRole => userRole.RoleId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<UserRole>()
-            .HasIndex(userRole => new { userRole.UserId, userRole.RoleId })
-            .IsUnique();
-
        // Default client statuses
         modelBuilder.Entity<ClientStatus>().HasData(
             new ClientStatus { Id = 1, Name = "Active", Description = "Client is active" },
@@ -101,9 +146,30 @@ public class ApplicationDbContext : DbContext
 
         // Default roles
         modelBuilder.Entity<Role>().HasData(
-            new Role { Id = 1, Name = "Administrator", Description = "Administrator with full access" },
-            new Role { Id = 2, Name = "Staff", Description = "Regular user with limited access" },
-            new Role { Id = 3, Name = "Viewer", Description = "Can view client records" }
+            new Role
+            {
+                Id = 1,
+                Name = "Administrator",
+                NormalizedName = "ADMINISTRATOR",
+                ConcurrencyStamp = "f81a2d35-e1cb-4ce4-9f1d-25d471968d3e",
+                Description = "Administrator with full access"
+            },
+            new Role
+            {
+                Id = 2,
+                Name = "Staff",
+                NormalizedName = "STAFF",
+                ConcurrencyStamp = "65352708-6848-4cc9-8d21-84393cf66483",
+                Description = "Regular user with limited access"
+            },
+            new Role
+            {
+                Id = 3,
+                Name = "Viewer",
+                NormalizedName = "VIEWER",
+                ConcurrencyStamp = "b6e86694-e906-44e9-9e0d-6070bc5defce",
+                Description = "Can view client records"
+            }
         );
     }
 }
