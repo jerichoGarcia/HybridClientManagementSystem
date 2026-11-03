@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import {
+  getAllMunicipalities,
+  getAllProvinces,
+} from "@aivangogh/ph-address";
 
 interface ClientStatus {
   id: number;
@@ -18,12 +22,16 @@ interface ClientContact {
 
 interface ClientAddress {
   id: number;
-  addressType?: string;
-  street?: string;
-  barangay?: string;
-  city?: string;
-  province?: string;
-  postalCode?: string;
+  clientId: number;
+  addressType: string;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  isPrimary: boolean;
+  dateCreated: string;
 }
 
 interface ClientDocument {
@@ -61,6 +69,291 @@ interface Client {
   addresses?: ClientAddress[];
   documents?: ClientDocument[];
   activityLogs?: ClientActivityLog[];
+}
+
+interface AddressFormValues {
+  addressType: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+  isPrimary: boolean;
+}
+
+interface AddressFormFieldsProps {
+  values: AddressFormValues;
+  idPrefix: string;
+  onChange: (
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
+}
+
+const ADDRESS_TYPES = ["Home", "Work", "Billing"] as const;
+const PHILIPPINES = "Philippines";
+const METRO_MANILA = "Metro Manila";
+const BARMM_SPECIAL_GEOGRAPHIC_AREA = "BARMM Special Geographic Area";
+const NCR_CODE = "1300000000";
+const MANILA_SUB_MUNICIPALITY_PARENT_CODE = "1380600000";
+const ISABELA_SPECIAL_AREA_CODE = "0990100000";
+const BARMM_SPECIAL_GEOGRAPHIC_AREA_CODE = "1999900000";
+
+const normalizeLocationValue = (value: string) => value
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .replace(/\b(city|municipality|province|region|ncr|national capital)\b/g, "")
+  .replace(/[^a-z0-9]/g, "");
+
+const findCompatibleOption = (value: string, options: readonly string[]) =>
+  options.find((option) =>
+    normalizeLocationValue(option) === normalizeLocationValue(value)
+  );
+
+const provinceRecords = getAllProvinces();
+const provinceNameByCode = new Map(
+  provinceRecords.map((province) => [province.psgcCode, province.name])
+);
+const cityOptionsByProvince = new Map<string, string[]>();
+
+for (const province of provinceRecords) {
+  cityOptionsByProvince.set(province.name, []);
+}
+
+cityOptionsByProvince.set(METRO_MANILA, []);
+cityOptionsByProvince.set(BARMM_SPECIAL_GEOGRAPHIC_AREA, []);
+
+for (const municipality of getAllMunicipalities()) {
+  if (municipality.provinceCode === MANILA_SUB_MUNICIPALITY_PARENT_CODE) {
+    continue;
+  }
+
+  const provinceName = municipality.provinceCode === NCR_CODE
+    ? METRO_MANILA
+    : municipality.provinceCode === ISABELA_SPECIAL_AREA_CODE
+      ? "Basilan"
+      : municipality.provinceCode === BARMM_SPECIAL_GEOGRAPHIC_AREA_CODE
+        ? BARMM_SPECIAL_GEOGRAPHIC_AREA
+        : provinceNameByCode.get(municipality.provinceCode);
+
+  if (provinceName) {
+    cityOptionsByProvince.get(provinceName)?.push(municipality.name);
+  }
+}
+
+for (const cities of cityOptionsByProvince.values()) {
+  cities.sort((first, second) => first.localeCompare(second));
+}
+
+const PHILIPPINE_PROVINCE_OPTIONS = [
+  ...provinceRecords.map((province) => province.name),
+  METRO_MANILA,
+  BARMM_SPECIAL_GEOGRAPHIC_AREA,
+].sort((first, second) => first.localeCompare(second));
+
+const getCityOptions = (province: string) =>
+  cityOptionsByProvince.get(province) || [];
+
+const getAddressValidationError = (form: AddressFormValues) => {
+  if (!form.addressType.trim()) return "Address type is required.";
+  if (!form.country.trim()) return "Country is required.";
+  if (!form.province.trim()) return "Province or region is required.";
+  if (!form.city.trim()) return "City or municipality is required.";
+
+  const canonicalProvince = findCompatibleOption(
+    form.province,
+    PHILIPPINE_PROVINCE_OPTIONS
+  );
+
+  if (
+    normalizeLocationValue(form.country) === normalizeLocationValue(PHILIPPINES) &&
+    canonicalProvince &&
+    !findCompatibleOption(form.city, getCityOptions(canonicalProvince))
+  ) {
+    return "Select a city or municipality that belongs to the selected province or region.";
+  }
+
+  return "";
+};
+
+function AddressFormFields({
+  values,
+  idPrefix,
+  onChange,
+}: AddressFormFieldsProps) {
+  const isPhilippines = normalizeLocationValue(values.country) ===
+    normalizeLocationValue(PHILIPPINES);
+  const cityOptions = isPhilippines
+    ? getCityOptions(values.province)
+    : [];
+  const hasValidProvince = Boolean(findCompatibleOption(
+    values.province,
+    PHILIPPINE_PROVINCE_OPTIONS
+  ));
+  const hasLegacyAddressType = values.addressType &&
+    !findCompatibleOption(values.addressType, ADDRESS_TYPES);
+  const hasLegacyCountry = values.country &&
+    !findCompatibleOption(values.country, [PHILIPPINES]);
+  const hasLegacyProvince = values.province &&
+    !findCompatibleOption(values.province, PHILIPPINE_PROVINCE_OPTIONS);
+  const hasLegacyCity = values.city && !findCompatibleOption(values.city, cityOptions);
+
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      <div className="sm:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-addressType`}
+          className="mb-2 block text-sm font-medium text-gray-700"
+        >
+          Address Type
+        </label>
+        <select
+          id={`${idPrefix}-addressType`}
+          name="addressType"
+          value={values.addressType}
+          onChange={onChange}
+          required
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+        >
+          {hasLegacyAddressType && (
+            <option value={values.addressType}>
+              Existing value: {values.addressType}
+            </option>
+          )}
+          {ADDRESS_TYPES.map((addressType) => (
+            <option key={addressType} value={addressType}>
+              {addressType}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="sm:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-addressLine1`}
+          className="mb-2 block text-sm font-medium text-gray-700"
+        >
+          Address Line 1
+        </label>
+        <input
+          id={`${idPrefix}-addressLine1`}
+          name="addressLine1"
+          type="text"
+          value={values.addressLine1}
+          onChange={onChange}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+        />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-addressLine2`}
+          className="mb-2 block text-sm font-medium text-gray-700"
+        >
+          Address Line 2
+        </label>
+        <input
+          id={`${idPrefix}-addressLine2`}
+          name="addressLine2"
+          type="text"
+          value={values.addressLine2}
+          onChange={onChange}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+        />
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-city`} className="mb-2 block text-sm font-medium text-gray-700">
+          City
+        </label>
+        <select
+          id={`${idPrefix}-city`}
+          name="city"
+          value={values.city}
+          onChange={onChange}
+          required
+          disabled={!isPhilippines || !hasValidProvince}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black disabled:cursor-not-allowed disabled:bg-gray-100"
+        >
+          <option value="">
+            {!isPhilippines ? "Select Philippines first" : !hasValidProvince ? "Select province / region first" : "Select city / municipality"}
+          </option>
+          {hasLegacyCity && (
+            <option value={values.city}>Existing value: {values.city}</option>
+          )}
+          {cityOptions.map((city) => (
+            <option key={city} value={city}>{city}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-province`} className="mb-2 block text-sm font-medium text-gray-700">
+          Province / Region
+        </label>
+        <select
+          id={`${idPrefix}-province`}
+          name="province"
+          value={values.province}
+          onChange={onChange}
+          required
+          disabled={!isPhilippines}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black disabled:cursor-not-allowed disabled:bg-gray-100"
+        >
+          <option value="">Select province / region</option>
+          {hasLegacyProvince && (
+            <option value={values.province}>Existing value: {values.province}</option>
+          )}
+          {PHILIPPINE_PROVINCE_OPTIONS.map((province) => (
+            <option key={province} value={province}>
+              {province === METRO_MANILA ? "Metro Manila / NCR" : province}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-postalCode`} className="mb-2 block text-sm font-medium text-gray-700">
+          Postal Code
+        </label>
+        <input id={`${idPrefix}-postalCode`} name="postalCode" type="text" value={values.postalCode} onChange={onChange} className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black" />
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-country`} className="mb-2 block text-sm font-medium text-gray-700">
+          Country
+        </label>
+        <select
+          id={`${idPrefix}-country`}
+          name="country"
+          value={values.country}
+          onChange={onChange}
+          required
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
+        >
+          {hasLegacyCountry && (
+            <option value={values.country}>Existing value: {values.country}</option>
+          )}
+          <option value={PHILIPPINES}>{PHILIPPINES}</option>
+        </select>
+      </div>
+
+      <div className="sm:col-span-2 flex items-center gap-3">
+        <input
+          id={`${idPrefix}-isPrimary`}
+          name="isPrimary"
+          type="checkbox"
+          checked={values.isPrimary}
+          onChange={onChange}
+          className="h-4 w-4"
+        />
+        <label htmlFor={`${idPrefix}-isPrimary`} className="text-sm font-medium text-gray-700">
+          Set as primary address
+        </label>
+      </div>
+    </div>
+  );
 }
 
 const API_URL = "http://localhost:5110/api/Clients";
@@ -110,6 +403,39 @@ export default function ClientProfilePage() {
   const [contactDeleting, setContactDeleting] = useState(false);
   const [deleteContactError, setDeleteContactError] = useState("");
   const deleteContactInProgress = useRef(false);
+
+  // ADDRESS MANAGEMENT
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressSaving, setAddressSaving] = useState(false);
+  const [addressFormError, setAddressFormError] = useState("");
+  const [addressForm, setAddressForm] = useState<AddressFormValues>({
+    addressType: "Home",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    country: PHILIPPINES,
+    isPrimary: false,
+  });
+  const [showEditAddressForm, setShowEditAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
+  const [editAddressSaving, setEditAddressSaving] = useState(false);
+  const [editAddressError, setEditAddressError] = useState("");
+  const [editAddressForm, setEditAddressForm] = useState<AddressFormValues>({
+    addressType: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    country: "",
+    isPrimary: false,
+  });
+  const [addressToDelete, setAddressToDelete] = useState<ClientAddress | null>(null);
+  const [addressDeleting, setAddressDeleting] = useState(false);
+  const [deleteAddressError, setDeleteAddressError] = useState("");
+  const deleteAddressInProgress = useRef(false);
 
   const clientId = params.id;
 
@@ -666,6 +992,326 @@ export default function ClientProfilePage() {
   };
 
   // --------------------------------------------------
+  // ADDRESS MANAGEMENT
+  // --------------------------------------------------
+
+  const resetAddressForm = () => {
+    setAddressForm({
+      addressType: "Home",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      province: "",
+      postalCode: "",
+      country: PHILIPPINES,
+      isPrimary: false,
+    });
+  };
+
+  const handleAddressChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = event.target;
+    const nextValue = type === "checkbox"
+      ? (event.target as HTMLInputElement).checked
+      : value;
+
+    setAddressForm((previous) => ({
+      ...previous,
+      ...(name === "province" ? {
+        province: value,
+        city: findCompatibleOption(previous.city, getCityOptions(value)) || "",
+      } : name === "country" ? {
+        country: value,
+        province: findCompatibleOption(
+          previous.province,
+          PHILIPPINE_PROVINCE_OPTIONS
+        ) || "",
+        city: "",
+      } : {
+        [name]: nextValue,
+      }),
+    }));
+  };
+
+  const handleEditAddressChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = event.target;
+    const nextValue = type === "checkbox"
+      ? (event.target as HTMLInputElement).checked
+      : value;
+
+    setEditAddressForm((previous) => ({
+      ...previous,
+      ...(name === "province" ? {
+        province: value,
+        city: findCompatibleOption(previous.city, getCityOptions(value)) || "",
+      } : name === "country" ? {
+        country: value,
+        province: findCompatibleOption(
+          previous.province,
+          PHILIPPINE_PROVINCE_OPTIONS
+        ) || "",
+        city: "",
+      } : {
+        [name]: nextValue,
+      }),
+    }));
+  };
+
+  const getAddressErrorMessage = async (
+    response: Response,
+    fallback: string
+  ) => {
+    try {
+      const body: { message?: string } = await response.json();
+      return body.message || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const toAddressPayload = (form: AddressFormValues) => ({
+    addressType: form.addressType.trim(),
+    addressLine1: form.addressLine1.trim() || null,
+    addressLine2: form.addressLine2.trim() || null,
+    city: form.city.trim() || null,
+    province: form.province.trim() || null,
+    postalCode: form.postalCode.trim() || null,
+    country: form.country.trim() || null,
+    isPrimary: form.isPrimary,
+  });
+
+  const updateAddressState = (updatedAddress: ClientAddress) => {
+    setClient((previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      let updatedAddresses = (previous.addresses || []).map((address) =>
+        address.id === updatedAddress.id ? updatedAddress : address
+      );
+
+      if (updatedAddress.isPrimary) {
+        updatedAddresses = updatedAddresses.map((address) => ({
+          ...address,
+          isPrimary: address.id === updatedAddress.id,
+        }));
+      }
+
+      return {
+        ...previous,
+        addresses: updatedAddresses,
+      };
+    });
+  };
+
+  const closeAddressForm = () => {
+    if (addressSaving) {
+      return;
+    }
+
+    setShowAddressForm(false);
+    setAddressFormError("");
+    resetAddressForm();
+  };
+
+  const handleAddAddress = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!client) {
+      return;
+    }
+
+    const validationError = getAddressValidationError(addressForm);
+
+    if (validationError) {
+      setAddressFormError(validationError);
+      return;
+    }
+
+    try {
+      setAddressSaving(true);
+      setAddressFormError("");
+
+      const response = await fetch(`${API_URL}/${client.id}/addresses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(toAddressPayload(addressForm)),
+      });
+
+      if (!response.ok) {
+        throw new Error(await getAddressErrorMessage(
+          response,
+          "Unable to add address. Please try again."
+        ));
+      }
+
+      const newAddress: ClientAddress = await response.json();
+
+      setClient((previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        let updatedAddresses = [...(previous.addresses || []), newAddress];
+
+        if (newAddress.isPrimary) {
+          updatedAddresses = updatedAddresses.map((address) => ({
+            ...address,
+            isPrimary: address.id === newAddress.id,
+          }));
+        }
+
+        return {
+          ...previous,
+          addresses: updatedAddresses,
+        };
+      });
+
+      resetAddressForm();
+      setShowAddressForm(false);
+    } catch (err) {
+      console.error(err);
+      setAddressFormError(
+        err instanceof Error ? err.message : "Unable to add address. Please try again."
+      );
+    } finally {
+      setAddressSaving(false);
+    }
+  };
+
+  const openEditAddressForm = (address: ClientAddress) => {
+    const addressType = findCompatibleOption(
+      address.addressType || "",
+      ADDRESS_TYPES
+    ) || address.addressType || "";
+    const country = findCompatibleOption(
+      address.country || "",
+      [PHILIPPINES]
+    ) || address.country || "";
+    const province = findCompatibleOption(
+      address.province || "",
+      PHILIPPINE_PROVINCE_OPTIONS
+    ) || address.province || "";
+    const city = findCompatibleOption(
+      address.city || "",
+      getCityOptions(province)
+    ) || address.city || "";
+
+    setEditingAddressId(address.id);
+    setEditAddressError("");
+    setEditAddressForm({
+      addressType,
+      addressLine1: address.addressLine1 || "",
+      addressLine2: address.addressLine2 || "",
+      city,
+      province,
+      postalCode: address.postalCode || "",
+      country,
+      isPrimary: address.isPrimary,
+    });
+    setShowEditAddressForm(true);
+  };
+
+  const handleUpdateAddress = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!client || editingAddressId === null) {
+      return;
+    }
+
+    const validationError = getAddressValidationError(editAddressForm);
+
+    if (validationError) {
+      setEditAddressError(validationError);
+      return;
+    }
+
+    try {
+      setEditAddressSaving(true);
+      setEditAddressError("");
+
+      const response = await fetch(
+        `${API_URL}/${client.id}/addresses/${editingAddressId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(toAddressPayload(editAddressForm)),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(await getAddressErrorMessage(
+          response,
+          "Unable to update address. Please try again."
+        ));
+      }
+
+      const updatedAddress: ClientAddress = await response.json();
+      updateAddressState(updatedAddress);
+      setShowEditAddressForm(false);
+      setEditingAddressId(null);
+    } catch (err) {
+      console.error(err);
+      setEditAddressError(
+        err instanceof Error ? err.message : "Unable to update address. Please try again."
+      );
+    } finally {
+      setEditAddressSaving(false);
+    }
+  };
+
+  const handleDeleteAddress = async () => {
+    if (!client || !addressToDelete || deleteAddressInProgress.current) {
+      return;
+    }
+
+    deleteAddressInProgress.current = true;
+    setAddressDeleting(true);
+    setDeleteAddressError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/${client.id}/addresses/${addressToDelete.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error(await getAddressErrorMessage(
+          response,
+          "Unable to delete address. Please try again."
+        ));
+      }
+
+      setClient((previous) => previous ? {
+        ...previous,
+        addresses: (previous.addresses || []).filter(
+          (address) => address.id !== addressToDelete.id
+        ),
+      } : previous);
+      setAddressToDelete(null);
+    } catch (err) {
+      console.error(err);
+      setDeleteAddressError(
+        err instanceof Error ? err.message : "Unable to delete address. Please try again."
+      );
+    } finally {
+      deleteAddressInProgress.current = false;
+      setAddressDeleting(false);
+    }
+  };
+
+  // --------------------------------------------------
   // LOADING
   // --------------------------------------------------
 
@@ -969,9 +1615,22 @@ export default function ClientProfilePage() {
 
         <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
 
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
-            Addresses
-          </h2>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold text-gray-900">
+              Addresses
+            </h2>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAddressFormError("");
+                setShowAddressForm(true);
+              }}
+              className="shrink-0 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              + Add Address
+            </button>
+          </div>
 
           {client.addresses &&
           client.addresses.length > 0 ? (
@@ -980,30 +1639,67 @@ export default function ClientProfilePage() {
               {client.addresses.map((address) => (
                 <div
                   key={address.id}
-                  className="rounded-lg border border-gray-200 p-4"
+                  className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <p className="font-medium text-gray-900">
-                    {address.addressType || "Address"}
-                  </p>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-gray-900">
+                        {address.addressType}
+                      </p>
 
-                  <p className="mt-1 text-gray-600">
-                    {[
-                      address.street,
-                      address.barangay,
-                      address.city,
-                      address.province,
-                      address.postalCode,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "-"}
-                  </p>
+                      {address.isPrimary && (
+                        <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                          Primary
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-1 space-y-1 break-words text-gray-600">
+                      {address.addressLine1 && <p>{address.addressLine1}</p>}
+                      {address.addressLine2 && <p>{address.addressLine2}</p>}
+                      {(address.city || address.province || address.postalCode) && (
+                        <p>
+                          {[address.city, address.province, address.postalCode]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      )}
+                      {address.country && <p>{address.country}</p>}
+                      {!address.addressLine1 &&
+                        !address.addressLine2 &&
+                        !address.city &&
+                        !address.province &&
+                        !address.postalCode &&
+                        !address.country && <p>-</p>}
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditAddressForm(address)}
+                      className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteAddressError("");
+                        setAddressToDelete(address);
+                      }}
+                      className="rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
 
             </div>
           ) : (
             <p className="text-gray-500">
-              No addresses available.
+              No addresses added yet.
             </p>
           )}
 
@@ -1633,6 +2329,160 @@ export default function ClientProfilePage() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+      {showAddressForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+          <div className="my-4 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Add Address
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Add an address for this client.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeAddressForm}
+                disabled={addressSaving}
+                aria-label="Close add address form"
+                className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAddress}>
+              <AddressFormFields
+                values={addressForm}
+                idPrefix="add"
+                onChange={handleAddressChange}
+              />
+
+              {addressFormError && (
+                <p role="alert" className="mt-4 text-sm text-red-700">
+                  {addressFormError}
+                </p>
+              )}
+
+              <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeAddressForm}
+                  disabled={addressSaving}
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addressSaving}
+                  className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {addressSaving ? "Saving..." : "Save Address"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showEditAddressForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+          <div className="my-4 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Edit Address
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Update the address details below.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditAddressForm(false)}
+                disabled={editAddressSaving}
+                aria-label="Close edit address form"
+                className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateAddress}>
+              <AddressFormFields
+                values={editAddressForm}
+                idPrefix="edit"
+                onChange={handleEditAddressChange}
+              />
+
+              {editAddressError && (
+                <p role="alert" className="mt-4 text-sm text-red-700">
+                  {editAddressError}
+                </p>
+              )}
+
+              <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAddressForm(false)}
+                  disabled={editAddressSaving}
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editAddressSaving}
+                  className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {editAddressSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {addressToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-address-title"
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2 id="delete-address-title" className="text-2xl font-bold text-gray-900">
+              Delete Address
+            </h2>
+            <p className="mt-4 break-words text-gray-700">
+              Delete {addressToDelete.addressType}: {addressToDelete.addressLine1 || addressToDelete.city || "this address"}?
+            </p>
+            {deleteAddressError && (
+              <p role="alert" className="mt-4 text-sm text-red-700">
+                {deleteAddressError}
+              </p>
+            )}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setAddressToDelete(null)}
+                disabled={addressDeleting}
+                className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAddress}
+                disabled={addressDeleting}
+                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {addressDeleting ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}
