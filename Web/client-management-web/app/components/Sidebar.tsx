@@ -12,7 +12,7 @@ const menuItems = [
   { name: "Clinical Records", href: "/records", icon: "✚" },
   { name: "Transactions & Billing", href: "/transactions", icon: "▤" },
   { name: "Follow-ups & Tasks", href: "/follow-ups", icon: "☑" },
-  { name: "Documents", icon: "▤" },
+  { name: "Documents", href: "/documents", icon: "▤" },
   { name: "Reports", icon: "▥" },
   { name: "User Management", icon: "♙" },
   { name: "Audit Logs", icon: "≡" },

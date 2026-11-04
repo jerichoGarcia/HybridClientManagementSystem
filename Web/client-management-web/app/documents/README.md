@@ -1,0 +1,3 @@
+# Future secure document storage
+
+This preview has no storage integration. Before implementing it, design server-controlled operations for a private Cloudflare R2 bucket with role-based authorization and patient ownership/association checks. Enforce file-size limits and file-type and content validation, and define a malware-scanning strategy. Authorize every download using short-lived signed URLs or controlled streaming. Record upload, download, and deletion audit history; store metadata in PostgreSQL. Design object-key lifecycle and cleanup, retention, and deletion policies. Keep storage credentials on the server and never expose them to frontend code or public environment variables.

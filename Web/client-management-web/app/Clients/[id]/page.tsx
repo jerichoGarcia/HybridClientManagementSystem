@@ -1728,7 +1728,9 @@ export default function ClientProfilePage() {
           <h2 className="mb-4 text-xl font-bold text-gray-900">
             Documents
           </h2>
-          <p className="mb-4 text-sm text-gray-600">Document uploads and downloads are not yet available.</p>
+          <p className="mb-2 text-sm text-gray-600">Document uploads and downloads are not yet available.</p>
+          <p className="text-sm text-gray-600">Central document management and secure uploads will be available after storage and authorization are implemented.</p>
+          <Link href="/documents" className="mb-4 mt-2 inline-block text-sm font-semibold text-blue-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Open Document Management →</Link>
 
           {client.documents &&
           client.documents.length > 0 ? (
