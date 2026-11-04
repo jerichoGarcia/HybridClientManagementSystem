@@ -10,7 +10,7 @@ const menuItems = [
   { name: "Registration Review", href: "/registrations", icon: "▤" },
   { name: "Appointments", href: "/appointments", icon: "▦" },
   { name: "Clinical Records", href: "/records", icon: "✚" },
-  { name: "Transactions & Billing", icon: "▤" },
+  { name: "Transactions & Billing", href: "/transactions", icon: "▤" },
   { name: "Follow-ups & Tasks", icon: "☑" },
   { name: "Documents", icon: "▤" },
   { name: "Reports", icon: "▥" },
