@@ -15,8 +15,8 @@ const menuItems = [
   { name: "Documents", href: "/documents", icon: "▤" },
   { name: "Reports", href: "/reports", icon: "▥" },
   { name: "User Management", href: "/users", icon: "♙" },
-  { name: "Audit Logs", icon: "≡" },
-  { name: "Settings", icon: "⚙" },
+  { name: "Audit Logs", href: "/audit-logs", icon: "≡" },
+  { name: "Settings", href: "/settings", icon: "⚙" },
 ];
 
 export default function Sidebar() {
