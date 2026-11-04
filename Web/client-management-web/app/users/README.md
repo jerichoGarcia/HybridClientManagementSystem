@@ -1,0 +1,3 @@
+# Future Identity integration
+
+Before applying the Identity migration to shared Neon, obtain explicit approval and rehearse it against a disposable PostgreSQL database. Future work must provide staff login, password hashing and a secure credential lifecycle, administrator-only user provisioning, secure account recovery, server-side authorization, role-based access control and role-assignment restrictions. Design staff-access audits, account lockout and session management, least-privilege permissions, and privacy protection for clinical and financial records. None of these capabilities is implemented by this frontend preview.
