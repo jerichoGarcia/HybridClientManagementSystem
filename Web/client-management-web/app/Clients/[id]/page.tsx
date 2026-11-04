@@ -3,10 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DentalChartPrototype, MedicalHistoryPrototype, TreatmentsPrototype } from "../../components/ClinicalPrototypes";
-import {
-  getAllMunicipalities,
-  getAllProvinces,
-} from "@aivangogh/ph-address";
+import { getCityOptions, METRO_MANILA, PHILIPPINES, PHILIPPINE_PROVINCE_OPTIONS } from "../../lib/philippineLocations";
 
 interface ClientStatus {
   id: number;
@@ -121,13 +118,6 @@ const formatPrimaryAddress = (address: ClientAddress) => {
 };
 
 const ADDRESS_TYPES = ["Home", "Work", "Billing"] as const;
-const PHILIPPINES = "Philippines";
-const METRO_MANILA = "Metro Manila";
-const BARMM_SPECIAL_GEOGRAPHIC_AREA = "BARMM Special Geographic Area";
-const NCR_CODE = "1300000000";
-const MANILA_SUB_MUNICIPALITY_PARENT_CODE = "1380600000";
-const ISABELA_SPECIAL_AREA_CODE = "0990100000";
-const BARMM_SPECIAL_GEOGRAPHIC_AREA_CODE = "1999900000";
 
 const normalizeLocationValue = (value: string) => value
   .normalize("NFD")
@@ -140,50 +130,6 @@ const findCompatibleOption = (value: string, options: readonly string[]) =>
   options.find((option) =>
     normalizeLocationValue(option) === normalizeLocationValue(value)
   );
-
-const provinceRecords = getAllProvinces();
-const provinceNameByCode = new Map(
-  provinceRecords.map((province) => [province.psgcCode, province.name])
-);
-const cityOptionsByProvince = new Map<string, string[]>();
-
-for (const province of provinceRecords) {
-  cityOptionsByProvince.set(province.name, []);
-}
-
-cityOptionsByProvince.set(METRO_MANILA, []);
-cityOptionsByProvince.set(BARMM_SPECIAL_GEOGRAPHIC_AREA, []);
-
-for (const municipality of getAllMunicipalities()) {
-  if (municipality.provinceCode === MANILA_SUB_MUNICIPALITY_PARENT_CODE) {
-    continue;
-  }
-
-  const provinceName = municipality.provinceCode === NCR_CODE
-    ? METRO_MANILA
-    : municipality.provinceCode === ISABELA_SPECIAL_AREA_CODE
-      ? "Basilan"
-      : municipality.provinceCode === BARMM_SPECIAL_GEOGRAPHIC_AREA_CODE
-        ? BARMM_SPECIAL_GEOGRAPHIC_AREA
-        : provinceNameByCode.get(municipality.provinceCode);
-
-  if (provinceName) {
-    cityOptionsByProvince.get(provinceName)?.push(municipality.name);
-  }
-}
-
-for (const cities of cityOptionsByProvince.values()) {
-  cities.sort((first, second) => first.localeCompare(second));
-}
-
-const PHILIPPINE_PROVINCE_OPTIONS = [
-  ...provinceRecords.map((province) => province.name),
-  METRO_MANILA,
-  BARMM_SPECIAL_GEOGRAPHIC_AREA,
-].sort((first, second) => first.localeCompare(second));
-
-const getCityOptions = (province: string) =>
-  cityOptionsByProvince.get(province) || [];
 
 const getAddressValidationError = (form: AddressFormValues) => {
   if (!form.addressType.trim()) return "Address type is required.";
