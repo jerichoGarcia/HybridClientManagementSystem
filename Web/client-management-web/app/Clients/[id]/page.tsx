@@ -39,18 +39,18 @@ interface ClientDocument {
   documentName?: string;
   documentType?: string;
   filePath?: string;
-  fileSize?: number;
-  uploadedAt?: string;
+  uploadedDate?: string;
 }
 
 interface ClientActivityLog {
   id: number;
-  action?: string;
-  entityType?: string;
-  entityId?: number;
+  activityType?: string;
   description?: string;
-  createdAt?: string;
+  dateCreated?: string;
 }
+
+const profileTabs = ["Overview", "Medical History", "Dental Chart", "Treatments", "Appointments", "Documents", "Activity"] as const;
+type ProfileTab = (typeof profileTabs)[number];
 
 interface Client {
   id: number;
@@ -394,6 +394,7 @@ export default function ClientProfilePage() {
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
   const [showEditForm, setShowEditForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1408,7 +1409,7 @@ export default function ClientProfilePage() {
   // --------------------------------------------------
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <main className="min-h-screen min-w-0 bg-gray-100 p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
 
         {/* BACK BUTTON */}
@@ -1430,7 +1431,7 @@ export default function ClientProfilePage() {
               Patient Profile
             </p>
 
-            <h1 className="mt-1 text-3xl font-bold text-gray-900">
+            <h1 className="mt-1 break-words text-3xl font-bold text-gray-900">
               {client.firstName}{" "}
               {client.middleName
                 ? `${client.middleName} `
@@ -1441,6 +1442,7 @@ export default function ClientProfilePage() {
             <p className="mt-1 text-gray-500">
               {client.clientNumber}
             </p>
+            <p className="mt-1 text-sm text-gray-500">Patient Information and Records</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -1462,6 +1464,23 @@ export default function ClientProfilePage() {
 
         </div>
 
+        <nav aria-label="Patient profile sections" className="mb-6 overflow-x-auto rounded-xl border border-slate-200 bg-white px-2 shadow-sm">
+          <div className="flex w-max min-w-full gap-1">
+            {profileTabs.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                aria-pressed={activeTab === tab}
+                onClick={() => setActiveTab(tab)}
+                className={`whitespace-nowrap border-b-2 px-4 py-4 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-blue-600 ${activeTab === tab ? "border-blue-600 text-blue-700" : "border-transparent text-slate-600 hover:text-slate-900"}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <div hidden={activeTab !== "Overview"}>
         {/* BASIC INFORMATION */}
 
         <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
@@ -1597,7 +1616,7 @@ export default function ClientProfilePage() {
 
                 <div
                   key={contact.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
+                  className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
 
                   <div>
@@ -1605,7 +1624,7 @@ export default function ClientProfilePage() {
                       {contact.contactType || "Contact"}
                     </p>
 
-                    <p className="mt-1 text-gray-600">
+                    <p className="mt-1 break-all text-gray-600">
                       {contact.contactValue || "-"}
                     </p>
 
@@ -1747,13 +1766,21 @@ export default function ClientProfilePage() {
 
         </section>
 
+        </div>
+
+        {activeTab === "Medical History" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Medical History — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Medical history functionality is planned but not yet available.</p></section>}
+        {activeTab === "Dental Chart" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Dental Chart — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">The dental chart is not yet available.</p></section>}
+        {activeTab === "Treatments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Treatment History &amp; Plans — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Treatment history and planning are not yet available.</p></section>}
+        {activeTab === "Appointments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Appointments — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Appointment management is not yet available.</p></section>}
+
         {/* DOCUMENTS */}
 
-        <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section hidden={activeTab !== "Documents"} className="mb-6 rounded-xl bg-white p-6 shadow-sm">
 
           <h2 className="mb-4 text-xl font-bold text-gray-900">
             Documents
           </h2>
+          <p className="mb-4 text-sm text-gray-600">Document uploads and downloads are not yet available.</p>
 
           {client.documents &&
           client.documents.length > 0 ? (
@@ -1774,7 +1801,7 @@ export default function ClientProfilePage() {
 
                   <p className="mt-1 text-sm text-gray-500">
                     Uploaded:{" "}
-                    {formatDate(document.uploadedAt)}
+                    {formatDate(document.uploadedDate)}
                   </p>
                 </div>
               ))}
@@ -1790,11 +1817,12 @@ export default function ClientProfilePage() {
 
         {/* ACTIVITY LOG */}
 
-        <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section hidden={activeTab !== "Activity"} className="mb-6 rounded-xl bg-white p-6 shadow-sm">
 
           <h2 className="mb-4 text-xl font-bold text-gray-900">
             Activity Log
           </h2>
+          <p className="mb-4 text-sm text-gray-600">Additional activity features are not yet available.</p>
 
           {client.activityLogs &&
           client.activityLogs.length > 0 ? (
@@ -1808,11 +1836,11 @@ export default function ClientProfilePage() {
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 
                     <p className="font-medium text-gray-900">
-                      {activity.action || "Activity"}
+                      {activity.activityType || "Activity"}
                     </p>
 
                     <p className="text-sm text-gray-500">
-                      {formatDate(activity.createdAt)}
+                      {formatDate(activity.dateCreated)}
                     </p>
 
                   </div>
