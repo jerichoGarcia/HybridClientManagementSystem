@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import ClinicIcon from "./ClinicIcon";
 
 const menuItems = [
-  { name: "Dashboard", href: "/", icon: "▣" },
+  { name: "Dashboard", href: "/dashboard", icon: "▣" },
   { name: "Patients", href: "/Clients", icon: "♙" },
   { name: "Registration Review", icon: "▤" },
   { name: "Appointments", icon: "▦" },

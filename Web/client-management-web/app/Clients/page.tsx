@@ -65,6 +65,18 @@ export default function ClientsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("add") === "1") {
+      const timer = window.setTimeout(() => {
+        setShowAddForm(true);
+        url.searchParams.delete("add");
+        window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, []);
+
   // --------------------------------------------------
   // ADD CLIENT FORM
   // --------------------------------------------------
