@@ -11,7 +11,7 @@ const menuItems = [
   { name: "Appointments", href: "/appointments", icon: "▦" },
   { name: "Clinical Records", href: "/records", icon: "✚" },
   { name: "Transactions & Billing", href: "/transactions", icon: "▤" },
-  { name: "Follow-ups & Tasks", icon: "☑" },
+  { name: "Follow-ups & Tasks", href: "/follow-ups", icon: "☑" },
   { name: "Documents", icon: "▤" },
   { name: "Reports", icon: "▥" },
   { name: "User Management", icon: "♙" },
