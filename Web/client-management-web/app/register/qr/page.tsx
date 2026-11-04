@@ -3,23 +3,7 @@
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import ClinicIcon from "../../components/ClinicIcon";
-
-function registrationUrl(configured: string | undefined): string | null {
-  if (!configured || configured.length > 200) return null;
-  try {
-    const url = new URL(configured.trim());
-    const host = url.hostname.toLowerCase().replace(/\.$/, "");
-    const ipv4 = host.split(".").map(Number);
-    const isIpv4 = /^\d+\.\d+\.\d+\.\d+$/.test(host) && ipv4.every((part) => part >= 0 && part <= 255);
-    const privateIpv4 = isIpv4 && (ipv4[0] === 10 || (ipv4[0] === 172 && ipv4[1] >= 16 && ipv4[1] <= 31) || (ipv4[0] === 192 && ipv4[1] === 168));
-    const unusableHost = !host || host === "localhost" || host.endsWith(".localhost") || host === "[::1]" || host === "[::]" || (isIpv4 && (ipv4[0] === 127 || ipv4[0] === 0 || ipv4[0] >= 224));
-    if (unusableHost || url.username || url.password || url.search || url.hash || !["/", "/register", "/register/"].includes(url.pathname)) return null;
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && privateIpv4)) return null;
-    return `${url.origin}/register`;
-  } catch {
-    return null;
-  }
-}
+import { registrationUrl } from "./registrationUrl";
 
 export default function RegistrationQrPage() {
   const url = registrationUrl(process.env.NEXT_PUBLIC_REGISTRATION_BASE_URL);
