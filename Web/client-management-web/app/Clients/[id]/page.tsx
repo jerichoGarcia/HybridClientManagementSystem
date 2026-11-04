@@ -1,5 +1,7 @@
 "use client";
 
+import PatientDialog from "../../components/PatientDialog";
+
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -1816,13 +1818,13 @@ export default function ClientProfilePage() {
       </div>
 
       {showEditForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <PatientDialog titleId="edit-patient-title" onClose={() => setShowEditForm(false)} busy={saving}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             
             {/* MODAL HEADER */}
             <div className="mb-6 flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 id="edit-patient-title" className="text-2xl font-bold text-gray-900">
                   Edit Patient
                 </h2>
 
@@ -1835,9 +1837,10 @@ export default function ClientProfilePage() {
                 type="button"
                 onClick={() => setShowEditForm(false)}
                 disabled={saving}
+                aria-label="Close edit patient form"
                 className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
               >
-                *
+                ×
               </button>
             </div>
 
@@ -2008,11 +2011,11 @@ export default function ClientProfilePage() {
             </form>
 
           </div>
-        </div>
+        </PatientDialog>
       )}
       {showContactForm && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <PatientDialog titleId="add-contact-title" onClose={closeContactForm} busy={contactSaving}>
 
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
 
@@ -2022,7 +2025,7 @@ export default function ClientProfilePage() {
 
               <div>
 
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 id="add-contact-title" className="text-2xl font-bold text-gray-900">
                   Add Contact
                 </h2>
 
@@ -2036,6 +2039,7 @@ export default function ClientProfilePage() {
                 type="button"
                 onClick={closeContactForm}
                 disabled={contactSaving}
+                aria-label="Close add contact form"
                 className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
               >
                 ×
@@ -2169,15 +2173,12 @@ export default function ClientProfilePage() {
 
           </div>
 
-        </div>
+        </PatientDialog>
 
       )}
       {contactToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <PatientDialog titleId="delete-contact-title" onClose={() => setContactToDelete(null)} busy={contactDeleting}>
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-contact-title"
             className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
           >
             <h2 id="delete-contact-title" className="text-2xl font-bold text-gray-900">
@@ -2210,17 +2211,17 @@ export default function ClientProfilePage() {
               </button>
             </div>
           </div>
-        </div>
+        </PatientDialog>
       )}
       {showEditContactForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <PatientDialog titleId="edit-contact-title" onClose={() => setShowEditContactForm(false)} busy={editContactSaving}>
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
 
             {/* MODAL HEADER */}
 
             <div className="mb-6 flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 id="edit-contact-title" className="text-2xl font-bold text-gray-900">
                   Edit Contact
                 </h2>
 
@@ -2233,6 +2234,7 @@ export default function ClientProfilePage() {
                 type="button"
                 onClick={() => setShowEditContactForm(false)}
                 disabled={editContactSaving}
+                aria-label="Close edit contact form"
                 className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
               >
                 ×
@@ -2350,14 +2352,14 @@ export default function ClientProfilePage() {
 
             </form>
           </div>
-        </div>
+        </PatientDialog>
       )}
       {showAddressForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+        <PatientDialog titleId="add-address-title" onClose={closeAddressForm} busy={addressSaving}>
           <div className="my-4 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 id="add-address-title" className="text-2xl font-bold text-gray-900">
                   Add Address
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
@@ -2407,14 +2409,14 @@ export default function ClientProfilePage() {
               </div>
             </form>
           </div>
-        </div>
+        </PatientDialog>
       )}
       {showEditAddressForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+        <PatientDialog titleId="edit-address-title" onClose={() => setShowEditAddressForm(false)} busy={editAddressSaving}>
           <div className="my-4 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 id="edit-address-title" className="text-2xl font-bold text-gray-900">
                   Edit Address
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
@@ -2464,14 +2466,11 @@ export default function ClientProfilePage() {
               </div>
             </form>
           </div>
-        </div>
+        </PatientDialog>
       )}
       {addressToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <PatientDialog titleId="delete-address-title" onClose={() => setAddressToDelete(null)} busy={addressDeleting}>
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-address-title"
             className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
           >
             <h2 id="delete-address-title" className="text-2xl font-bold text-gray-900">
@@ -2504,7 +2503,7 @@ export default function ClientProfilePage() {
               </button>
             </div>
           </div>
-        </div>
+        </PatientDialog>
       )}
 
     </main>

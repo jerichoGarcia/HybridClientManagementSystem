@@ -1,6 +1,8 @@
 
 "use client";
 
+import PatientDialog from "../components/PatientDialog";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -354,6 +356,7 @@ export default function ClientsPage() {
 
           <button
             type="button"
+            data-patient-dialog-fallback
             onClick={() => setShowAddForm(true)}
             className="rounded-lg bg-black px-5 py-3 font-medium text-white transition hover:bg-gray-800"
           >
@@ -578,7 +581,7 @@ export default function ClientsPage() {
           ================================================== */}
 
       {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <PatientDialog titleId="add-patient-title" onClose={closeAddForm} busy={saving}>
 
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
 
@@ -586,7 +589,7 @@ export default function ClientsPage() {
             <div className="mb-6 flex items-start justify-between">
 
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 id="add-patient-title" className="text-2xl font-bold text-gray-900">
                   Add Patient
                 </h2>
 
@@ -599,6 +602,7 @@ export default function ClientsPage() {
                 type="button"
                 onClick={closeAddForm}
                 disabled={saving}
+                aria-label="Close add patient form"
                 className="text-2xl text-gray-400 transition hover:text-gray-700 disabled:cursor-not-allowed"
               >
                 ×
@@ -763,7 +767,7 @@ export default function ClientsPage() {
 
           </div>
 
-        </div>
+        </PatientDialog>
       )}
     </main>
   );
