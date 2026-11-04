@@ -1,6 +1,7 @@
 "use client";
 
 import { patientFetch, patientError } from "../../lib/apiConfig";
+import { formatCivilDate, formatManilaTimestamp } from "../../lib/dateFormat";
 
 import PatientDialog from "../../components/PatientDialog";
 
@@ -517,6 +518,9 @@ export default function ClientProfilePage() {
     if (!date) {
       return "-";
     }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return formatCivilDate(date) ?? date;
+    if (/(?:Z|[+-]\d{2}:\d{2})$/i.test(date)) return formatManilaTimestamp(date, true) ?? date;
 
     const parsedDate = new Date(date);
 

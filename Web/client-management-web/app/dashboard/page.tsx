@@ -1,6 +1,7 @@
 "use client";
 
 import { patientFetch, patientError } from "../lib/apiConfig";
+import { formatCivilDate, formatManilaTimestamp } from "../lib/dateFormat";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -26,6 +27,8 @@ const panel = "rounded-2xl border border-slate-200 bg-white shadow-sm";
 
 function formatDate(value?: string | null) {
   if (!value) return "Not available";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return formatCivilDate(value) ?? "Not available";
+  if (/(?:Z|[+-]\d{2}:\d{2})$/i.test(value)) return formatManilaTimestamp(value) ?? "Not available";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "Not available" : new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(date);
 }
@@ -99,7 +102,7 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        <section aria-label="Upcoming features" className="grid gap-4 md:grid-cols-3">{[{ title: "Appointments", items: ["Today's Appointments", "Upcoming Appointments"], icon: "▦" }, { title: "Registration Review", items: ["Pending QR Registrations"], icon: "▤" }, { title: "Activity", items: ["Recent Patient Activity"], icon: "◷" }].map((section) => <div key={section.title} className={`${panel} p-5`}><div className="flex items-center gap-3"><span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-700">{section.icon}</span><h2 className="font-bold">{section.title}</h2></div><ul className="mt-4 divide-y divide-slate-100">{section.items.map((item) => <li key={item} className="flex items-center justify-between gap-3 py-3 text-sm text-slate-600"><span>{item}</span><span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">Coming Soon</span></li>)}</ul></div>)}</section>
+        <section aria-label="Upcoming features" className="grid gap-4 md:grid-cols-3">{[{ title: "Appointments", items: ["Today's Appointments", "Upcoming Appointments"], icon: "▦" }, { title: "Registration Review", items: ["Pending QR Registrations"], icon: "▤" }, { title: "Activity", items: ["Recent Patient Activity"], icon: "◷" }].map((section) => <div key={section.title} className={`${panel} p-5`}><div className="flex items-center gap-3"><span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-700">{section.icon}</span><h2 className="font-bold">{section.title}</h2></div><ul className="mt-4 divide-y divide-slate-100">{section.items.map((item) => <li key={item} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm text-slate-600"><span>{item}</span><span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">Coming Soon</span></li>)}</ul></div>)}</section>
       </div>
     </main>
   );
