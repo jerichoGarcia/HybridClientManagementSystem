@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { DentalChartPrototype, MedicalHistoryPrototype, TreatmentsPrototype } from "../../components/ClinicalPrototypes";
 import {
   getAllMunicipalities,
   getAllProvinces,
@@ -1768,9 +1769,9 @@ export default function ClientProfilePage() {
 
         </div>
 
-        {activeTab === "Medical History" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Medical History — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Medical history functionality is planned but not yet available.</p></section>}
-        {activeTab === "Dental Chart" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Dental Chart — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">The dental chart is not yet available.</p></section>}
-        {activeTab === "Treatments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Treatment History &amp; Plans — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Treatment history and planning are not yet available.</p></section>}
+        {activeTab === "Medical History" && <MedicalHistoryPrototype />}
+        {activeTab === "Dental Chart" && <DentalChartPrototype />}
+        {activeTab === "Treatments" && <TreatmentsPrototype />}
         {activeTab === "Appointments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Appointments — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Appointment management is not yet available.</p></section>}
 
         {/* DOCUMENTS */}
