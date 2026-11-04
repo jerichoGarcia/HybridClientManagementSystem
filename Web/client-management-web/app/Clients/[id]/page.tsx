@@ -1,5 +1,7 @@
 "use client";
 
+import { patientFetch, patientError } from "../../lib/apiConfig";
+
 import PatientDialog from "../../components/PatientDialog";
 
 import { useEffect, useRef, useState } from "react";
@@ -335,7 +337,7 @@ function AddressFormFields({
   );
 }
 
-const API_URL = "http://localhost:5110/api/Clients";
+const API_URL = "/api/Clients";
 
 export default function ClientProfilePage() {
   const params = useParams();
@@ -442,29 +444,17 @@ export default function ClientProfilePage() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
+        const response = await patientFetch(
           `${API_URL}/${clientId}`
         );
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Patient not found.");
-          }
 
-          throw new Error("Failed to load patient.");
-        }
 
         const data: Client = await response.json();
 
         setClient(data);
       } catch (err) {
-        console.error(err);
-
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Unable to load patient.");
-        }
+        setError(patientError(err, "loading patient"));
       } finally {
         setLoading(false);
       }
@@ -588,7 +578,7 @@ export default function ClientProfilePage() {
     try {
       setSaving(true);
 
-      const response = await fetch(
+      await patientFetch(
         `${API_URL}/${client.id}`,
         {
           method: "PUT",
@@ -611,16 +601,7 @@ export default function ClientProfilePage() {
         }
       );
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
 
-        console.error(
-          "Update client failed:",
-          errorMessage
-        );
-
-        throw new Error("Failed to update client.");
-      }
 
       setClient((previous) => {
         if (!previous) {
@@ -645,30 +626,24 @@ export default function ClientProfilePage() {
       setShowEditForm(false);
 
       try {
-        const refreshResponse = await fetch(
+        const refreshResponse = await patientFetch(
           `${API_URL}/${client.id}`,
           { cache: "no-store" }
         );
 
-        if (!refreshResponse.ok) {
-          throw new Error("Failed to refresh client profile.");
-        }
+
 
         const refreshedClient: Client = await refreshResponse.json();
         setClient(refreshedClient);
         alert("Patient updated successfully.");
       } catch (refreshError) {
-        console.error(refreshError);
+        patientError(refreshError, "refreshing patient");
         alert(
           "Patient updated, but the profile could not be refreshed. Please reload the page."
         );
       }
     } catch (err) {
-      console.error(err);
-
-      alert(
-        "Unable to update patient. Please check that the API is running."
-      );
+      alert(patientError(err, "updating patient"));
     } finally {
       setSaving(false);
     }
@@ -771,7 +746,7 @@ export default function ClientProfilePage() {
     try {
       setEditContactSaving(true);
 
-      const response = await fetch(
+      const response = await patientFetch(
         `${API_URL}/${client.id}/contacts/${editingContactId}`,
         {
           method: "PUT",
@@ -789,16 +764,7 @@ export default function ClientProfilePage() {
         }
       );
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
 
-        console.error(
-          "Update contact failed:",
-          errorMessage
-        );
-
-        throw new Error("Failed to update contact.");
-      }
 
       const updatedContact: ClientContact =
         await response.json();
@@ -834,11 +800,7 @@ export default function ClientProfilePage() {
 
       alert("Contact updated successfully.");
     } catch (err) {
-      console.error(err);
-
-      alert(
-        "Unable to update contact. Please check that the API is running."
-      );
+      alert(patientError(err, "updating contact"));
     } finally {
       setEditContactSaving(false);
     }
@@ -854,14 +816,12 @@ export default function ClientProfilePage() {
     setDeleteContactError("");
 
     try {
-      const response = await fetch(
+      await patientFetch(
         `${API_URL}/${client.id}/contacts/${contactToDelete.id}`,
         { method: "DELETE" }
       );
 
-      if (!response.ok) {
-        throw new Error(`Delete contact failed (${response.status}).`);
-      }
+
 
       setClient((previous) => previous ? {
         ...previous,
@@ -871,8 +831,7 @@ export default function ClientProfilePage() {
       } : previous);
       setContactToDelete(null);
     } catch (err) {
-      console.error(err);
-      setDeleteContactError("Unable to delete contact. Please try again.");
+      setDeleteContactError(patientError(err, "deleting contact"));
     } finally {
       deleteContactInProgress.current = false;
       setContactDeleting(false);
@@ -910,7 +869,7 @@ export default function ClientProfilePage() {
     try {
       setContactSaving(true);
 
-      const response = await fetch(
+      const response = await patientFetch(
         `${API_URL}/${client.id}/contacts`,
         {
           method: "POST",
@@ -928,16 +887,7 @@ export default function ClientProfilePage() {
         }
       );
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
 
-        console.error(
-          "Add contact failed:",
-          errorMessage
-        );
-
-        throw new Error("Failed to add contact.");
-      }
 
       const newContact: ClientContact =
         await response.json();
@@ -974,11 +924,7 @@ export default function ClientProfilePage() {
 
       alert("Contact added successfully.");
     } catch (err) {
-      console.error(err);
-
-      alert(
-        "Unable to add contact. Please check that the API is running."
-      );
+      alert(patientError(err, "adding contact"));
     } finally {
       setContactSaving(false);
     }
@@ -1053,18 +999,6 @@ export default function ClientProfilePage() {
     }));
   };
 
-  const getAddressErrorMessage = async (
-    response: Response,
-    fallback: string
-  ) => {
-    try {
-      const body: { message?: string } = await response.json();
-      return body.message || fallback;
-    } catch {
-      return fallback;
-    }
-  };
-
   const toAddressPayload = (form: AddressFormValues) => ({
     addressType: form.addressType.trim(),
     addressLine1: form.addressLine1.trim() || null,
@@ -1130,7 +1064,7 @@ export default function ClientProfilePage() {
       setAddressSaving(true);
       setAddressFormError("");
 
-      const response = await fetch(`${API_URL}/${client.id}/addresses`, {
+      const response = await patientFetch(`${API_URL}/${client.id}/addresses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1138,12 +1072,7 @@ export default function ClientProfilePage() {
         body: JSON.stringify(toAddressPayload(addressForm)),
       });
 
-      if (!response.ok) {
-        throw new Error(await getAddressErrorMessage(
-          response,
-          "Unable to add address. Please try again."
-        ));
-      }
+
 
       const newAddress: ClientAddress = await response.json();
 
@@ -1170,10 +1099,7 @@ export default function ClientProfilePage() {
       resetAddressForm();
       setShowAddressForm(false);
     } catch (err) {
-      console.error(err);
-      setAddressFormError(
-        err instanceof Error ? err.message : "Unable to add address. Please try again."
-      );
+      setAddressFormError(patientError(err, "adding address"));
     } finally {
       setAddressSaving(false);
     }
@@ -1232,7 +1158,7 @@ export default function ClientProfilePage() {
       setEditAddressSaving(true);
       setEditAddressError("");
 
-      const response = await fetch(
+      const response = await patientFetch(
         `${API_URL}/${client.id}/addresses/${editingAddressId}`,
         {
           method: "PUT",
@@ -1243,22 +1169,14 @@ export default function ClientProfilePage() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(await getAddressErrorMessage(
-          response,
-          "Unable to update address. Please try again."
-        ));
-      }
+
 
       const updatedAddress: ClientAddress = await response.json();
       updateAddressState(updatedAddress);
       setShowEditAddressForm(false);
       setEditingAddressId(null);
     } catch (err) {
-      console.error(err);
-      setEditAddressError(
-        err instanceof Error ? err.message : "Unable to update address. Please try again."
-      );
+      setEditAddressError(patientError(err, "updating address"));
     } finally {
       setEditAddressSaving(false);
     }
@@ -1274,17 +1192,12 @@ export default function ClientProfilePage() {
     setDeleteAddressError("");
 
     try {
-      const response = await fetch(
+      await patientFetch(
         `${API_URL}/${client.id}/addresses/${addressToDelete.id}`,
         { method: "DELETE" }
       );
 
-      if (!response.ok) {
-        throw new Error(await getAddressErrorMessage(
-          response,
-          "Unable to delete address. Please try again."
-        ));
-      }
+
 
       setClient((previous) => previous ? {
         ...previous,
@@ -1294,10 +1207,7 @@ export default function ClientProfilePage() {
       } : previous);
       setAddressToDelete(null);
     } catch (err) {
-      console.error(err);
-      setDeleteAddressError(
-        err instanceof Error ? err.message : "Unable to delete address. Please try again."
-      );
+      setDeleteAddressError(patientError(err, "deleting address"));
     } finally {
       deleteAddressInProgress.current = false;
       setAddressDeleting(false);
@@ -1394,7 +1304,7 @@ export default function ClientProfilePage() {
             </p>
             <p className="mt-1 text-sm text-gray-500">Patient Information and Records</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -1820,7 +1730,7 @@ export default function ClientProfilePage() {
       {showEditForm && (
         <PatientDialog titleId="edit-patient-title" onClose={() => setShowEditForm(false)} busy={saving}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            
+
             {/* MODAL HEADER */}
             <div className="mb-6 flex items-start justify-between">
               <div>
@@ -1987,7 +1897,7 @@ export default function ClientProfilePage() {
                 </div>
 
               </div>
-              
+
               {/* BUTTONS */}
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button

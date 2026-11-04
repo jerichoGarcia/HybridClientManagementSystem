@@ -1,5 +1,7 @@
 "use client";
 
+import { patientFetch, patientError } from "../lib/apiConfig";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -30,19 +32,19 @@ function formatDate(value?: string | null) {
 
 export default function DashboardPage() {
   const [patients, setPatients] = useState<Patient[] | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     async function loadPatients() {
       try {
-        const response = await fetch("http://localhost:5110/api/Clients", { signal: controller.signal });
-        if (!response.ok) throw new Error("Patient request failed");
+        const response = await patientFetch("/api/Clients", { signal: controller.signal });
+
         const data: unknown = await response.json();
         if (!Array.isArray(data)) throw new Error("Unexpected patient response");
         setPatients(data as Patient[]);
-      } catch {
-        if (!controller.signal.aborted) setError(true);
+      } catch (error) {
+        if (!controller.signal.aborted) setError(patientError(error, "loading dashboard"));
       }
     }
     void loadPatients();
@@ -72,7 +74,7 @@ export default function DashboardPage() {
           <Link href="/Clients?add=1" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">+ Add New Patient</Link>
         </header>
 
-        {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Patient information is unavailable. Check that the patient management API is running, then refresh this page.</div>}
+        {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
 
         <section aria-label="Patient summary" aria-busy={!patients && !error} className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 xl:grid-cols-5">
           {[{ name: "Total", icon: "♙", badge: "bg-blue-50 text-blue-700", count: patients?.length }, ...statuses.map((status) => ({ ...status, count: summary?.counts.get(status.id) }))].map((item) => (

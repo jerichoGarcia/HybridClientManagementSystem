@@ -1,6 +1,8 @@
 
 "use client";
 
+import { patientFetch, patientError } from "../lib/apiConfig";
+
 import PatientDialog from "../components/PatientDialog";
 
 import { useEffect, useState } from "react";
@@ -35,7 +37,7 @@ interface ClientForm {
   address: string;
 }
 
-const API_URL = "http://localhost:5110/api/Clients";
+const API_URL = "/api/Clients";
 
 export default function ClientsPage() {
 
@@ -101,11 +103,9 @@ export default function ClientsPage() {
 
     const fetchClients = async () => {
       try {
-        const response = await fetch(API_URL);
+        const response = await patientFetch(API_URL);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch clients.");
-        }
+
 
         const data: Client[] = await response.json();
 
@@ -115,12 +115,8 @@ export default function ClientsPage() {
           setLoading(false);
         }
       } catch (err) {
-        console.error(err);
-
         if (!cancelled) {
-          setError(
-            "Unable to connect to the patient management service."
-          );
+          setError(patientError(err, "loading patients"));
           setLoading(false);
         }
       }
@@ -232,7 +228,7 @@ export default function ClientsPage() {
     try {
       setSaving(true);
 
-      const response = await fetch(API_URL, {
+      const response = await patientFetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,16 +243,7 @@ export default function ClientsPage() {
         }),
       });
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
 
-        console.error(
-          "Create client failed:",
-          errorMessage
-        );
-
-        throw new Error("Failed to create client.");
-      }
 
       const newClient: Client = await response.json();
 
@@ -271,10 +258,7 @@ export default function ClientsPage() {
 
       alert("Patient added successfully.");
     } catch (err) {
-      console.error(err);
-      alert(
-        "Unable to add patient. Please check that the API is running."
-      );
+      alert(patientError(err, "adding patient"));
     } finally {
       setSaving(false);
     }
