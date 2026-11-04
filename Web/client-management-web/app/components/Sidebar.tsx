@@ -13,7 +13,7 @@ const menuItems = [
   { name: "Transactions & Billing", href: "/transactions", icon: "▤" },
   { name: "Follow-ups & Tasks", href: "/follow-ups", icon: "☑" },
   { name: "Documents", href: "/documents", icon: "▤" },
-  { name: "Reports", icon: "▥" },
+  { name: "Reports", href: "/reports", icon: "▥" },
   { name: "User Management", icon: "♙" },
   { name: "Audit Logs", icon: "≡" },
   { name: "Settings", icon: "⚙" },
