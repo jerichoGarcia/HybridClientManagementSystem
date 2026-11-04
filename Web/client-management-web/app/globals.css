@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  @page { margin: 15mm; }
+  body:has(.qr-poster) { background: white; color: black; }
+  .qr-page { min-height: auto; background: white; padding: 0; }
+  .qr-controls { display: none !important; }
+  .qr-poster { border: 0; box-shadow: none; padding: 0; }
+  .qr-code { border: 0; break-inside: avoid; }
+  .qr-code svg { width: 70mm; height: 70mm; max-width: none; }
+}
