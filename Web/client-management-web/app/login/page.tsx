@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import ClinicIcon from "../components/ClinicIcon";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -30,13 +31,13 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10 text-slate-900">
       <div className="w-full max-w-md">
         <div className="mb-7 flex items-center justify-center gap-3">
-          <div aria-hidden="true" className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm">CM</div>
-          <p className="text-sm font-semibold leading-tight text-slate-900">Client Management<br /><span className="font-normal text-slate-500">System</span></p>
+          <ClinicIcon />
+          <p className="text-sm font-semibold leading-tight text-slate-900">Dental Clinic<br /><span className="font-normal text-slate-500">Management System</span></p>
         </div>
 
         <section aria-labelledby="login-title" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-9">
           <h1 id="login-title" className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to Client Management System.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to Dental Clinic Management System.</p>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
             <div>
@@ -58,7 +59,7 @@ export default function LoginPage() {
             <button type="submit" className="h-12 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Sign In</button>
           </form>
         </section>
-        <p className="mt-6 text-center text-xs text-slate-500">Client Management System</p>
+        <p className="mt-6 text-center text-xs text-slate-500">Dental Clinic Management System</p>
       </div>
     </main>
   );

@@ -497,10 +497,10 @@ export default function ClientProfilePage() {
 
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error("Client not found.");
+            throw new Error("Patient not found.");
           }
 
-          throw new Error("Failed to fetch client.");
+          throw new Error("Failed to load patient.");
         }
 
         const data: Client = await response.json();
@@ -512,7 +512,7 @@ export default function ClientProfilePage() {
         if (err instanceof Error) {
           setError(err.message);
         } else {
-          setError("Unable to load client.");
+          setError("Unable to load patient.");
         }
       } finally {
         setLoading(false);
@@ -705,18 +705,18 @@ export default function ClientProfilePage() {
 
         const refreshedClient: Client = await refreshResponse.json();
         setClient(refreshedClient);
-        alert("Client updated successfully.");
+        alert("Patient updated successfully.");
       } catch (refreshError) {
         console.error(refreshError);
         alert(
-          "Client updated, but the profile could not be refreshed. Please reload the page."
+          "Patient updated, but the profile could not be refreshed. Please reload the page."
         );
       }
     } catch (err) {
       console.error(err);
 
       alert(
-        "Unable to update client. Please check that the API is running."
+        "Unable to update patient. Please check that the API is running."
       );
     } finally {
       setSaving(false);
@@ -1363,7 +1363,7 @@ export default function ClientProfilePage() {
         <div className="mx-auto max-w-7xl">
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
             <p className="text-gray-700">
-              Loading client...
+              Loading patient...
             </p>
           </div>
         </div>
@@ -1385,16 +1385,16 @@ export default function ClientProfilePage() {
             onClick={() => router.push("/Clients")}
             className="mb-6 font-medium text-blue-600 hover:text-blue-800"
           >
-            ← Back to Clients
+            ← Back to Patients
           </button>
 
           <div className="rounded-xl border border-red-200 bg-red-50 p-6">
             <h1 className="text-xl font-bold text-red-800">
-              Unable to Load Client
+              Unable to Load Patient
             </h1>
 
             <p className="mt-2 text-red-700">
-              {error || "Client not found."}
+              {error || "Patient not found."}
             </p>
           </div>
 
@@ -1418,7 +1418,7 @@ export default function ClientProfilePage() {
           onClick={() => router.push("/Clients")}
           className="mb-6 font-medium text-blue-600 hover:text-blue-800"
         >
-          ← Back to Clients
+          ← Back to Patients
         </button>
 
         {/* HEADER */}
@@ -1427,7 +1427,7 @@ export default function ClientProfilePage() {
 
           <div>
             <p className="text-sm font-medium text-gray-500">
-              Client Profile
+              Patient Profile
             </p>
 
             <h1 className="mt-1 text-3xl font-bold text-gray-900">
@@ -1449,7 +1449,7 @@ export default function ClientProfilePage() {
               onClick={openEditForm}
               className="rounded-lg bg-black px-5 py-2.5 font-medium text-white transition hover:bg-gray-800"
             >
-              Edit Client
+              Edit Patient
             </button>
 
             <span
@@ -1474,7 +1474,7 @@ export default function ClientProfilePage() {
 
             <div>
               <p className="text-sm font-medium text-gray-500">
-                Client Number
+                Patient Number
               </p>
 
               <p className="mt-1 font-semibold text-gray-900">
@@ -1845,11 +1845,11 @@ export default function ClientProfilePage() {
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Edit Client
+                  Edit Patient
                 </h2>
 
                 <p className="mt-1 text-gray-500">
-                  Update the client&apos; information below.
+                  Update the patient&apos;s information below.
                 </p>
               </div>
 
@@ -2049,7 +2049,7 @@ export default function ClientProfilePage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Add a contact method for this client.
+                  Add a contact method for this patient.
                 </p>
 
               </div>
@@ -2383,7 +2383,7 @@ export default function ClientProfilePage() {
                   Add Address
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Add an address for this client.
+                  Add an address for this patient.
                 </p>
               </div>
               <button

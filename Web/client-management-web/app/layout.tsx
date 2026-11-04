@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Client Management System",
-  description: "Client Management System",
+  title: "Dental Clinic Management System",
+  description: "Dental Clinic Management System",
 };
 
 export default function RootLayout({

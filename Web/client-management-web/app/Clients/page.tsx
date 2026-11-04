@@ -105,7 +105,7 @@ export default function ClientsPage() {
 
         if (!cancelled) {
           setError(
-            "Unable to connect to the Client Management API."
+            "Unable to connect to the patient management service."
           );
           setLoading(false);
         }
@@ -255,11 +255,11 @@ export default function ClientsPage() {
       resetForm();
       setShowAddForm(false);
 
-      alert("Client added successfully.");
+      alert("Patient added successfully.");
     } catch (err) {
       console.error(err);
       alert(
-        "Unable to add client. Please check that the API is running."
+        "Unable to add patient. Please check that the API is running."
       );
     } finally {
       setSaving(false);
@@ -332,11 +332,11 @@ export default function ClientsPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Client Management
+              Patient Management
             </h1>
 
             <p className="mt-1 text-gray-500">
-              Manage your clients and their information.
+              Manage your patients and their information.
             </p>
           </div>
 
@@ -345,7 +345,7 @@ export default function ClientsPage() {
             onClick={() => setShowAddForm(true)}
             className="rounded-lg bg-black px-5 py-3 font-medium text-white transition hover:bg-gray-800"
           >
-            + Add Client
+            + Add Patient
           </button>
         </div>
 
@@ -355,7 +355,7 @@ export default function ClientsPage() {
             htmlFor="client-search"
             className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Search Clients
+            Search Patients
           </label>
 
           <div className="relative">
@@ -378,7 +378,7 @@ export default function ClientsPage() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Search by client number, name, email, or phone..."
+              placeholder="Search by patient number, name, email, or phone..."
               className="h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-12 text-base text-slate-900 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             />
 
@@ -387,7 +387,7 @@ export default function ClientsPage() {
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => setSearch("")}
-                aria-label="Clear client search"
+                aria-label="Clear patient search"
                 className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               >
                 <svg
@@ -422,7 +422,7 @@ export default function ClientsPage() {
         {loading && (
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
             <p className="text-gray-500">
-              Loading clients...
+              Loading patients...
             </p>
           </div>
         )}
@@ -439,7 +439,7 @@ export default function ClientsPage() {
                   <tr>
 
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
-                      Client Number
+                      Patient Number
                     </th>
 
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
@@ -527,7 +527,7 @@ export default function ClientsPage() {
               <div className="p-10 text-center">
 
                 <p className="font-medium text-gray-700">
-                  No clients found
+                  No patients found
                 </p>
 
                 {search && (
@@ -551,7 +551,7 @@ export default function ClientsPage() {
                   <span className="font-medium text-gray-700">
                     {clients.length}
                   </span>{" "}
-                  clients
+                  patients
                 </p>
               </div>
             )}
@@ -575,11 +575,11 @@ export default function ClientsPage() {
 
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Add Client
+                  Add Patient
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Enter the client&apos;s information below.
+                  Enter the patient&apos;s information below.
                 </p>
               </div>
 
@@ -742,7 +742,7 @@ export default function ClientsPage() {
                 >
                   {saving
                     ? "Saving..."
-                    : "Save Client"}
+                    : "Save Patient"}
                 </button>
 
               </div>

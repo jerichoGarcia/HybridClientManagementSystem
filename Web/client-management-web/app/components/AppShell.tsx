@@ -13,7 +13,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Sidebar />
-      <div className="min-h-screen pl-64">{children}</div>
+      <div className="min-h-screen md:pl-64">{children}</div>
     </>
   );
 }

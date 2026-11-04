@@ -2,121 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ClinicIcon from "./ClinicIcon";
 
 const menuItems = [
-  {
-    name: "Dashboard",
-    href: "/",
-    icon: "▣",
-  },
-  {
-    name: "Clients",
-    href: "/Clients",
-    icon: "♙",
-  },
-  {
-    name: "Contacts",
-    href: "/Contacts",
-    icon: "☎",
-  },
-  {
-    name: "Addresses",
-    href: "/Addresses",
-    icon: "⌂",
-  },
-  {
-    name: "Documents",
-    href: "/Documents",
-    icon: "▤",
-  },
-  {
-    name: "Reports",
-    href: "/Reports",
-    icon: "▥",
-  },
-  {
-    name: "Settings",
-    href: "/Settings",
-    icon: "⚙",
-  },
+  { name: "Dashboard", href: "/", icon: "▣" },
+  { name: "Patients", href: "/Clients", icon: "♙" },
+  { name: "Registration Review", icon: "▤" },
+  { name: "Appointments", icon: "▦" },
+  { name: "Clinical Records", icon: "✚" },
+  { name: "Transactions & Billing", icon: "▤" },
+  { name: "Follow-ups & Tasks", icon: "☑" },
+  { name: "Documents", icon: "▤" },
+  { name: "Reports", icon: "▥" },
+  { name: "User Management", icon: "♙" },
+  { name: "Audit Logs", icon: "≡" },
+  { name: "Settings", icon: "⚙" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col bg-slate-900 text-white">
-      {/* LOGO / SYSTEM NAME */}
-      <div className="flex h-20 items-center border-b border-slate-700 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold">
-          CM
-        </div>
-
-        <div className="ml-3">
-          <h1 className="text-sm font-bold leading-tight">
-            Client Management
-          </h1>
-
-          <p className="text-xs text-slate-400">
-            System
-          </p>
-        </div>
+    <aside className="z-40 flex w-full flex-col bg-slate-900 text-white md:fixed md:inset-y-0 md:left-0 md:w-64">
+      <div className="flex items-center gap-3 border-b border-slate-700 px-5 py-4">
+        <ClinicIcon />
+        <p className="text-sm font-bold leading-snug">Dental Clinic<br />Management System</p>
       </div>
-
-      {/* NAVIGATION */}
-      <nav className="flex-1 px-3 py-6">
-        <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Main Menu
-        </p>
-
-        <div className="space-y-1">
+      <nav aria-label="Main navigation" className="overflow-x-auto px-3 py-3 md:flex-1 md:overflow-y-auto md:overflow-x-hidden">
+        <div className="flex w-max gap-1 md:w-auto md:flex-col">
           {menuItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center rounded-lg px-3 py-3 text-sm font-medium transition ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <span className="flex w-8 items-center justify-center text-base">
-                  {item.icon}
-                </span>
-
-                <span>{item.name}</span>
-              </Link>
+            const isActive = item.href === "/" ? pathname === "/" : item.href && (pathname === item.href || pathname.startsWith(`${item.href}/`));
+            const content = <><span aria-hidden="true" className="flex w-6 shrink-0 justify-center text-base">{item.icon}</span><span className="min-w-0 flex-1">{item.name}</span>{!item.href && <span className="text-[10px] font-medium text-slate-400">Coming Soon</span>}</>;
+            const classes = "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400";
+            return item.href ? (
+              <Link key={item.name} href={item.href} aria-current={isActive ? "page" : undefined} className={`${classes} ${isActive ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"}`}>{content}</Link>
+            ) : (
+              <div key={item.name} aria-disabled="true" className={`${classes} cursor-not-allowed text-slate-400`}>{content}</div>
             );
           })}
         </div>
       </nav>
-
-      {/* USER AREA */}
-      <div className="border-t border-slate-700 p-4">
-        <div className="flex items-center gap-3 rounded-lg bg-slate-800 p-3">
-
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-600 text-sm font-semibold">
-            AU
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">
-              Admin User
-            </p>
-
-            <p className="truncate text-xs text-slate-400">
-              Administrator
-            </p>
-          </div>
-
-        </div>
-      </div>
     </aside>
   );
 }
