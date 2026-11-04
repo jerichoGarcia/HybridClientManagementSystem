@@ -9,7 +9,7 @@ const menuItems = [
   { name: "Patients", href: "/Clients", icon: "♙" },
   { name: "Registration Review", href: "/registrations", icon: "▤" },
   { name: "Appointments", href: "/appointments", icon: "▦" },
-  { name: "Clinical Records", icon: "✚" },
+  { name: "Clinical Records", href: "/records", icon: "✚" },
   { name: "Transactions & Billing", icon: "▤" },
   { name: "Follow-ups & Tasks", icon: "☑" },
   { name: "Documents", icon: "▤" },

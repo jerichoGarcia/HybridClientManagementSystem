@@ -1718,7 +1718,7 @@ export default function ClientProfilePage() {
 
         {activeTab === "Medical History" && <MedicalHistoryPrototype />}
         {activeTab === "Dental Chart" && <DentalChartPrototype />}
-        {activeTab === "Treatments" && <TreatmentsPrototype />}
+        {activeTab === "Treatments" && <><TreatmentsPrototype /><section className="mt-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-bold text-slate-900">Clinical Records</h2><p className="mt-2 text-sm text-slate-600">Patient-specific clinical records will be linked after secure backend integration. The clinical records page is a preview and cannot save records.</p><Link href="/records" className="mt-4 inline-block text-sm font-semibold text-blue-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Open Clinical Records →</Link></section></>}
         {activeTab === "Appointments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Appointments</h2><p className="mt-2 text-sm text-slate-600">Patient-specific appointments are not available yet. Scheduling is a frontend preview and cannot save appointments.</p><Link href="/appointments" className="mt-4 inline-block text-sm font-semibold text-blue-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Open Appointment Management →</Link></section>}
 
         {/* DOCUMENTS */}
