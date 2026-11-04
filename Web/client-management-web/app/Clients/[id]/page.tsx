@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { DentalChartPrototype, MedicalHistoryPrototype, TreatmentsPrototype } from "../../components/ClinicalPrototypes";
 import { getCityOptions, METRO_MANILA, PHILIPPINES, PHILIPPINE_PROVINCE_OPTIONS } from "../../lib/philippineLocations";
 
@@ -1718,7 +1719,7 @@ export default function ClientProfilePage() {
         {activeTab === "Medical History" && <MedicalHistoryPrototype />}
         {activeTab === "Dental Chart" && <DentalChartPrototype />}
         {activeTab === "Treatments" && <TreatmentsPrototype />}
-        {activeTab === "Appointments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Appointments — Coming Soon</h2><p className="mt-2 text-sm text-slate-600">Appointment management is not yet available.</p></section>}
+        {activeTab === "Appointments" && <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Appointments</h2><p className="mt-2 text-sm text-slate-600">Patient-specific appointments are not available yet. Scheduling is a frontend preview and cannot save appointments.</p><Link href="/appointments" className="mt-4 inline-block text-sm font-semibold text-blue-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Open Appointment Management →</Link></section>}
 
         {/* DOCUMENTS */}
 
