@@ -29,5 +29,5 @@ export default function PatientDialog({ titleId, onClose, busy, children }: { ti
     if (event.shiftKey && (document.activeElement === first || !event.currentTarget.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && (document.activeElement === last || !event.currentTarget.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
   }
-  return <dialog ref={ref} aria-labelledby={titleId} onKeyDown={keepFocus} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-2xl bg-white p-0 shadow-xl backdrop:bg-black/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{children}</dialog>;
+  return <dialog ref={ref} aria-labelledby={titleId} onKeyDown={keepFocus} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{children}</dialog>;
 }

@@ -496,22 +496,22 @@ export default function ClientProfilePage() {
     const status = getStatusName().toLowerCase();
 
     if (status === "active") {
-      return "bg-green-100 text-green-700";
+      return "bg-emerald-50 text-emerald-700";
     }
 
     if (status === "inactive") {
-      return "bg-gray-100 text-gray-700";
+      return "bg-slate-100 text-slate-700";
     }
 
     if (status === "pending") {
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-amber-50 text-amber-800";
     }
 
     if (status === "archived") {
-      return "bg-red-100 text-red-700";
+      return "bg-violet-50 text-violet-700";
     }
 
-    return "bg-gray-100 text-gray-700";
+    return "bg-slate-100 text-slate-700";
   };
 
   const formatDate = (date?: string) => {
@@ -1224,7 +1224,7 @@ export default function ClientProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
+      <main className="patient-ui min-h-screen p-4 sm:p-8">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
             <p className="text-gray-700">
@@ -1242,7 +1242,7 @@ export default function ClientProfilePage() {
 
   if (error || !client) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
+      <main className="patient-ui min-h-screen p-4 sm:p-8">
         <div className="mx-auto max-w-7xl">
 
           <button
@@ -1273,7 +1273,7 @@ export default function ClientProfilePage() {
   // --------------------------------------------------
 
   return (
-    <main className="min-h-screen min-w-0 bg-gray-100 p-4 sm:p-8">
+    <main className="patient-ui min-h-screen min-w-0 p-4 sm:p-8 lg:px-10">
       <div className="mx-auto max-w-7xl">
 
         {/* BACK BUTTON */}
@@ -1288,14 +1288,14 @@ export default function ClientProfilePage() {
 
         {/* HEADER */}
 
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
           <div>
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
               Patient Profile
             </p>
 
-            <h1 className="mt-1 break-words text-3xl font-bold text-gray-900">
+            <h1 className="mt-2 break-words text-3xl font-bold tracking-tight text-slate-900">
               {client.firstName}{" "}
               {client.middleName
                 ? `${client.middleName} `
@@ -1303,17 +1303,17 @@ export default function ClientProfilePage() {
               {client.lastName}
             </h1>
 
-            <p className="mt-1 text-gray-500">
+            <p className="mt-2 text-sm text-slate-600">
               {client.clientNumber}
             </p>
-            <p className="mt-1 text-sm text-gray-500">Patient Information and Records</p>
+            <p className="mt-1 text-sm text-slate-500">Patient Information and Records</p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={openEditForm}
-              className="rounded-lg bg-black px-5 py-2.5 font-medium text-white transition hover:bg-gray-800"
+              className="patient-primary px-5 py-2.5 transition"
             >
               Edit Patient
             </button>
@@ -1347,7 +1347,7 @@ export default function ClientProfilePage() {
         <div hidden={activeTab !== "Overview"}>
         {/* BASIC INFORMATION */}
 
-        <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section className="patient-panel mb-6 p-5 sm:p-6">
 
           <h2 className="mb-6 text-xl font-bold text-gray-900">
             Basic Information
@@ -1453,7 +1453,7 @@ export default function ClientProfilePage() {
 
         {/* CONTACTS */}
 
-        <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section className="patient-panel mb-6 p-5 sm:p-6">
 
           <div className="mb-4 flex items-center justify-between">
 
@@ -1464,7 +1464,7 @@ export default function ClientProfilePage() {
             <button
               type="button"
               onClick={() => setShowContactForm(true)}
-              className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+              className="patient-primary px-4 py-2 transition"
             >
               + Add Contact
             </button>
@@ -1538,7 +1538,7 @@ export default function ClientProfilePage() {
 
         {/* ADDRESSES */}
 
-        <section className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section className="patient-panel mb-6 p-5 sm:p-6">
 
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-gray-900">
@@ -1551,7 +1551,7 @@ export default function ClientProfilePage() {
                 setAddressFormError("");
                 setShowAddressForm(true);
               }}
-              className="shrink-0 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+              className="patient-primary shrink-0 px-4 py-2 transition"
             >
               + Add Address
             </button>
@@ -1639,7 +1639,7 @@ export default function ClientProfilePage() {
 
         {/* DOCUMENTS */}
 
-        <section hidden={activeTab !== "Documents"} className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section hidden={activeTab !== "Documents"} className="patient-panel mb-6 p-5 sm:p-6">
 
           <h2 className="mb-4 text-xl font-bold text-gray-900">
             Documents
@@ -1683,7 +1683,7 @@ export default function ClientProfilePage() {
 
         {/* ACTIVITY LOG */}
 
-        <section hidden={activeTab !== "Activity"} className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <section hidden={activeTab !== "Activity"} className="patient-panel mb-6 p-5 sm:p-6">
 
           <h2 className="mb-4 text-xl font-bold text-gray-900">
             Activity Log

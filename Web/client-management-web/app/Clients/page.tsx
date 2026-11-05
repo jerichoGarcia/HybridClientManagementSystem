@@ -300,22 +300,22 @@ export default function ClientsPage() {
     const status = getStatusName(client).toLowerCase();
 
     if (status === "active") {
-      return "bg-green-100 text-green-700";
+      return "bg-emerald-50 text-emerald-700";
     }
 
     if (status === "inactive") {
-      return "bg-gray-100 text-gray-700";
+      return "bg-slate-100 text-slate-700";
     }
 
     if (status === "pending") {
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-amber-50 text-amber-800";
     }
 
     if (status === "archived") {
-      return "bg-red-100 text-red-700";
+      return "bg-violet-50 text-violet-700";
     }
 
-    return "bg-gray-100 text-gray-700";
+    return "bg-slate-100 text-slate-700";
   };
 
   // --------------------------------------------------
@@ -323,17 +323,18 @@ export default function ClientsPage() {
   // --------------------------------------------------
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <main className="patient-ui min-h-screen px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
 
         {/* HEADER */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Patient care</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
               Patient Management
             </h1>
 
-            <p className="mt-1 text-gray-500">
+            <p className="mt-2 text-sm text-slate-600">
               Manage your patients and their information.
             </p>
           </div>
@@ -342,14 +343,14 @@ export default function ClientsPage() {
             type="button"
             data-patient-dialog-fallback
             onClick={() => setShowAddForm(true)}
-            className="rounded-lg bg-black px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+            className="patient-primary w-full px-5 py-2.5 transition sm:w-auto"
           >
             + Add Patient
           </button>
         </div>
 
         {/* SEARCH */}
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="patient-panel mb-6 p-4 sm:p-5">
           <label
             htmlFor="client-search"
             className="mb-2 block text-sm font-medium text-gray-700"
@@ -378,7 +379,7 @@ export default function ClientsPage() {
                 setSearch(event.target.value)
               }
               placeholder="Search by patient number, name, email, or phone..."
-              className="h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-12 text-base text-slate-900 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white py-2 pl-11 pr-12 text-base text-slate-900 placeholder:text-slate-500 outline-none transition"
             />
 
             {search && (
@@ -406,7 +407,7 @@ export default function ClientsPage() {
 
         {/* ERROR */}
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
+          <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-5 text-red-800">
             <p className="font-medium">
               Connection Error
             </p>
@@ -419,7 +420,7 @@ export default function ClientsPage() {
 
         {/* LOADING */}
         {loading && (
-          <div className="rounded-xl bg-white p-10 text-center shadow-sm">
+          <div role="status" className="patient-panel p-10 text-center">
             <p className="text-gray-500">
               Loading patients...
             </p>
@@ -428,13 +429,13 @@ export default function ClientsPage() {
 
         {/* CLIENT TABLE */}
         {!loading && !error && (
-          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+          <div className="patient-panel overflow-hidden">
 
             <div className="overflow-x-auto">
 
-              <table className="w-full">
+              <table className="w-full min-w-[720px] text-sm">
 
-                <thead className="border-b bg-gray-50">
+                <thead className="border-b border-slate-200 bg-slate-50">
                   <tr>
 
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
@@ -469,7 +470,7 @@ export default function ClientsPage() {
                   {filteredClients.map((client) => (
                     <tr
                       key={client.id}
-                      className="transition hover:bg-gray-50"
+                      className="transition hover:bg-slate-50"
                     >
 
                       <td className="px-6 py-4 font-medium text-gray-900">
@@ -506,7 +507,7 @@ export default function ClientsPage() {
                         <button
                           type="button"
                           onClick={() => { router.push(`/Clients/${client.id}`); }}
-                          className="font-medium text-blue-600 hover:text-blue-800"
+                          className="font-semibold text-blue-700 hover:text-blue-900"
                         >
                           View
                         </button>
@@ -540,7 +541,7 @@ export default function ClientsPage() {
 
             {/* TABLE FOOTER */}
             {filteredClients.length > 0 && (
-              <div className="border-t bg-gray-50 px-6 py-4">
+              <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
                 <p className="text-sm text-gray-500">
                   Showing{" "}
                   <span className="font-medium text-gray-700">
@@ -567,7 +568,7 @@ export default function ClientsPage() {
       {showAddForm && (
         <PatientDialog titleId="add-patient-title" onClose={closeAddForm} busy={saving}>
 
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-2xl p-5 sm:p-7">
 
             {/* MODAL HEADER */}
             <div className="mb-6 flex items-start justify-between">
@@ -616,7 +617,7 @@ export default function ClientsPage() {
                     onChange={handleChange}
                     required
                     placeholder="Juan"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
                 </div>
 
@@ -637,7 +638,7 @@ export default function ClientsPage() {
                     onChange={handleChange}
                     required
                     placeholder="Dela Cruz"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
                 </div>
 
@@ -657,7 +658,7 @@ export default function ClientsPage() {
                     value={form.middleName}
                     onChange={handleChange}
                     placeholder="Santos"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
                 </div>
 
@@ -677,7 +678,7 @@ export default function ClientsPage() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="juan@example.com"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
                 </div>
 
@@ -697,7 +698,7 @@ export default function ClientsPage() {
                     value={form.phoneNumber}
                     onChange={handleChange}
                     placeholder="09171234567"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
                 </div>
 
@@ -717,20 +718,20 @@ export default function ClientsPage() {
                     value={form.address}
                     onChange={handleChange}
                     placeholder="Quezon City, Philippines"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-black placeholder:text-gray-400 outline-none transition focus:border-black"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
                 </div>
 
               </div>
 
               {/* FORM BUTTONS */}
-              <div className="mt-8 flex justify-end gap-3">
+              <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
                 <button
                   type="button"
                   onClick={closeAddForm}
                   disabled={saving}
-                  className="rounded-lg border border-gray-300 px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="patient-secondary px-5 py-2.5 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -738,7 +739,7 @@ export default function ClientsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-lg bg-black px-5 py-3 font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="patient-primary px-5 py-2.5 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saving
                     ? "Saving..."

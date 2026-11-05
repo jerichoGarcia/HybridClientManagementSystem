@@ -25,6 +25,77 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Shared patient-management conventions. These intentionally mirror the
+   established slate/blue controls used by the newer clinic modules. */
+.patient-ui {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.patient-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.patient-primary,
+.patient-secondary,
+.patient-destructive {
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.patient-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.patient-primary:hover:not(:disabled) { background: #1d4ed8; }
+
+.patient-secondary {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.patient-secondary:hover:not(:disabled) { background: #f8fafc; }
+
+.patient-destructive {
+  background: #dc2626;
+  color: #fff;
+}
+
+.patient-destructive:hover:not(:disabled) { background: #b91c1c; }
+
+.patient-ui input:not([type="checkbox"]):not([type="radio"]),
+.patient-ui select,
+.patient-ui textarea {
+  min-height: 2.75rem;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.patient-ui input:not([type="checkbox"]):not([type="radio"]):focus,
+.patient-ui select:focus,
+.patient-ui textarea:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.35);
+}
+
+.patient-ui input[type="checkbox"] {
+  accent-color: #2563eb;
+}
+
+.patient-ui button:focus-visible,
+.patient-ui a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 @media print {
   @page { margin: 15mm; }
   body:has(.qr-poster) { background: white; color: black; }
