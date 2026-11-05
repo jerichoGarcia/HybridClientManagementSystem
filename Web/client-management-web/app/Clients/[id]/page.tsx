@@ -2138,7 +2138,7 @@ export default function ClientProfilePage() {
                 <button
                   type="submit"
                   disabled={contactSaving}
-                  className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="patient-primary px-5 py-2.5 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {contactSaving
                     ? "Saving..."
@@ -2389,7 +2389,7 @@ export default function ClientProfilePage() {
                 <button
                   type="submit"
                   disabled={addressSaving}
-                  className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="patient-primary px-5 py-2.5 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {addressSaving ? "Saving..." : "Save Address"}
                 </button>
