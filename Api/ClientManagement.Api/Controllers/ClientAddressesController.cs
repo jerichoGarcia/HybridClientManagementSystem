@@ -2,6 +2,7 @@ using ClientManagement.Api.Data;
 using ClientManagement.Api.DTOs;
 using ClientManagement.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClientManagement.Api.Controllers;
@@ -19,6 +20,7 @@ public class ClientAddressesController : ControllerBase
 
     // GET: api/clients/2/addresses
     [HttpGet]
+    [Authorize(Policy = "PatientRead")]
     public async Task<IActionResult> GetAddresses(int clientId)
     {
         var clientExists = await _context.Clients
@@ -43,6 +45,7 @@ public class ClientAddressesController : ControllerBase
 
     // GET: api/clients/2/addresses/5
     [HttpGet("{addressId:int}")]
+    [Authorize(Policy = "PatientRead")]
     public async Task<IActionResult> GetAddress(int clientId, int addressId)
     {
         var address = await _context.ClientAddresses
@@ -63,6 +66,7 @@ public class ClientAddressesController : ControllerBase
 
     // POST: api/clients/2/addresses
     [HttpPost]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> CreateAddress(
         int clientId,
         CreateClientAddressDto dto)
@@ -130,6 +134,7 @@ public class ClientAddressesController : ControllerBase
 
     // PUT: api/clients/2/addresses/5
     [HttpPut("{addressId:int}")]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> UpdateAddress(
         int clientId,
         int addressId,
@@ -192,6 +197,7 @@ public class ClientAddressesController : ControllerBase
 
     // DELETE: api/clients/2/addresses/5
     [HttpDelete("{addressId:int}")]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> DeleteAddress(int clientId, int addressId)
     {
         var address = await _context.ClientAddresses

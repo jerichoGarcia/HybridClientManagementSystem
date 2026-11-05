@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import ClinicIcon from "./ClinicIcon";
+import { apiFetch } from "../lib/apiConfig";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: "▣" },
@@ -21,6 +24,14 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+  async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try { await apiFetch("/api/auth/logout", { method: "POST" }); router.replace("/login"); }
+    catch { setLoggingOut(false); }
+  }
   return (
     <aside className="app-sidebar z-40 flex w-full flex-col text-white md:fixed md:inset-y-0 md:left-0 md:w-64">
       <div className="sidebar-divider flex items-center gap-3 border-b px-5 py-4">
@@ -42,12 +53,10 @@ export default function Sidebar() {
         </div>
       </nav>
       <div className="sidebar-divider border-t px-3 py-3">
-        <button type="button" disabled aria-describedby="logout-unavailable" className="flex w-full cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-400">
+        <button type="button" onClick={logout} disabled={loggingOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-200 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:text-slate-400">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center text-base"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M10 17v2H5V5h5v2M14 8l4 4-4 4M8 12h10" /></svg></span>
-          <span className="min-w-0 flex-1">Log out</span>
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+          <span className="min-w-0 flex-1">{loggingOut ? "Logging out…" : "Log out"}</span>
         </button>
-        <span id="logout-unavailable" className="sr-only">Unavailable until authentication is implemented.</span>
       </div>
     </aside>
   );

@@ -1,6 +1,8 @@
 using ClientManagement.Api.Data;
 using ClientManagement.Api.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -37,6 +39,40 @@ builder.Services.AddIdentityCore<User>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "MercadoStaff";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.SlidingExpiration = true;
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PatientRead", policy => policy.RequireRole("Administrator", "Staff", "Viewer"));
+    options.AddPolicy("PatientWrite", policy => policy.RequireRole("Administrator", "Staff"));
+    options.AddPolicy("PatientStatus", policy => policy.RequireRole("Administrator", "Staff"));
+});
+
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
+
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
     options.ValidationInterval = TimeSpan.FromMinutes(5);
@@ -44,6 +80,7 @@ builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 
 // Add controllers
 builder.Services.AddControllers()
+    .AddMvcOptions(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()))
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -53,15 +90,23 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Allow our web/tablet application to communicate with the API
+// Browser sessions require explicit trusted origins; credentials cannot be used
+// with a permissive CORS policy. Production origins must be configured outside source.
+var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var allowedOrigins = configuredOrigins
+    .Concat(builder.Environment.IsDevelopment() ? ["http://localhost:3000", "https://localhost:3000"] : [])
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClientApp", policy =>
     {
         policy
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+            .WithOrigins(allowedOrigins)
+            .WithHeaders("Content-Type", "X-CSRF-TOKEN")
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+            .AllowCredentials();
     });
 });
 
@@ -77,6 +122,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowClientApp");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -3,6 +3,7 @@ using ClientManagement.Api.DTOs;
 using ClientManagement.Api.Models;
 using ClientManagement.Api.Validation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClientManagement.Api.Controllers;
@@ -20,6 +21,7 @@ public class ClientsController : ControllerBase
 
     // GET: api/clients
     [HttpGet]
+    [Authorize(Policy = "PatientRead")]
     public async Task<IActionResult> GetClients()
     {
         var clients = await _context.Clients
@@ -32,6 +34,7 @@ public class ClientsController : ControllerBase
 
     // GET: api/clients/5
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "PatientRead")]
     public async Task<IActionResult> GetClient(int id)
     {
         var client = await _context.Clients
@@ -55,6 +58,7 @@ public class ClientsController : ControllerBase
 
     // POST: api/clients
     [HttpPost]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> CreateClient(CreateClientDto dto)
     {
         if (!PhilippineMobileValidator.TryNormalize(dto.PhoneNumber, out var phoneNumber))
@@ -101,6 +105,7 @@ public class ClientsController : ControllerBase
     }
     // PUT: api/clients/5
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> UpdateClient(
         int id,
         UpdateClientDto dto)
@@ -167,6 +172,7 @@ public class ClientsController : ControllerBase
 
     // PUT: api/clients/5/status
     [HttpPut("{id:int}/status")]
+    [Authorize(Policy = "PatientStatus")]
     public async Task<IActionResult> UpdateClientStatus(
         int id,
         [FromBody] int statusId)

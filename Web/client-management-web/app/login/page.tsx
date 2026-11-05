@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import ClinicIcon from "../components/ClinicIcon";
+import { apiFetch, PatientApiError } from "../lib/apiConfig";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -9,8 +11,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors: { username?: string; password?: string } = {};
 
@@ -22,7 +26,19 @@ export default function LoginPage() {
     if (!password) nextErrors.password = "Enter your password.";
 
     setErrors(nextErrors);
-    setNotice(Object.keys(nextErrors).length === 0 ? "Authentication is not configured yet." : "");
+    if (Object.keys(nextErrors).length) { setNotice(""); return; }
+
+    setSubmitting(true);
+    try {
+      await apiFetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernameOrEmail: username.trim(), password }),
+      });
+      router.replace("/dashboard");
+    } catch (error) {
+      setNotice(error instanceof PatientApiError && (error.status === 400 || error.status === 401 || error.status === 403) ? "Invalid username, email, or password." : "Unable to sign in right now. Please try again.");
+    } finally { setSubmitting(false); }
   }
 
   const inputClass = "mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-900 placeholder:text-slate-500 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
@@ -32,12 +48,12 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-7 flex items-center justify-center gap-3">
           <ClinicIcon />
-          <p className="text-sm font-semibold leading-tight text-slate-900">Dental Clinic<br /><span className="font-normal text-slate-500">Management System</span></p>
+          <p className="text-sm font-bold leading-tight text-slate-900">Mercado Dental Clinic<br /><span className="font-semibold text-slate-500">Management System</span></p>
         </div>
 
         <section aria-labelledby="login-title" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-9">
           <h1 id="login-title" className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to Dental Clinic Management System.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to Mercado Dental Clinic Management System.</p>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
             <div>
@@ -56,10 +72,10 @@ export default function LoginPage() {
             </div>
 
             <div aria-live="polite" aria-atomic="true">{notice && <p role="status" className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">{notice}</p>}</div>
-            <button type="submit" className="h-12 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Sign In</button>
+            <button type="submit" disabled={submitting} className="h-12 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-60">{submitting ? "Signing in…" : "Sign In"}</button>
           </form>
         </section>
-        <p className="mt-6 text-center text-xs text-slate-500">Dental Clinic Management System</p>
+        <p className="mt-6 text-center text-xs text-slate-500">Mercado Dental Clinic Management System</p>
       </div>
     </main>
   );

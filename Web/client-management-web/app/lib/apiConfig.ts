@@ -1,6 +1,6 @@
 const localOrigin = "http://localhost:5110";
 
-class PatientApiError extends Error {
+export class PatientApiError extends Error {
   constructor(public readonly kind: "configuration" | "network" | "http", public readonly status?: number) { super(kind); }
 }
 
@@ -26,13 +26,38 @@ export function apiUrl(path: string): string {
   return `${url.origin}${path}`;
 }
 
-export async function patientFetch(path: string, init?: RequestInit): Promise<Response> {
+let csrfToken: string | undefined;
+let csrfRequest: Promise<string> | undefined;
+
+async function getCsrfToken(): Promise<string> {
+  if (csrfToken) return csrfToken;
+  csrfRequest ??= (async () => {
+    const response = await fetch(apiUrl("/api/auth/csrf"), { credentials: "include" });
+    if (!response.ok) throw new PatientApiError("http", response.status);
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== "object" || typeof (payload as { requestToken?: unknown }).requestToken !== "string") throw new PatientApiError("http", response.status);
+    csrfToken = (payload as { requestToken: string }).requestToken;
+    return csrfToken;
+  })();
+  try { return await csrfRequest; }
+  finally { csrfRequest = undefined; }
+}
+
+/** Sends credentialed requests and attaches an antiforgery token to unsafe methods. */
+export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const url = apiUrl(path);
+  const method = (init?.method ?? "GET").toUpperCase();
+  const headers = new Headers(init?.headers);
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers.set("X-CSRF-TOKEN", await getCsrfToken());
   let response: Response;
-  try { response = await fetch(url, init); }
+  try { response = await fetch(url, { ...init, headers, credentials: "include" }); }
   catch (error) { if (init?.signal?.aborted) throw error; throw new PatientApiError("network"); }
   if (!response.ok) throw new PatientApiError("http", response.status);
   return response;
+}
+
+export async function patientFetch(path: string, init?: RequestInit): Promise<Response> {
+  return apiFetch(path, init);
 }
 
 /** Diagnostics deliberately exclude exception messages, request URLs and server bodies. */

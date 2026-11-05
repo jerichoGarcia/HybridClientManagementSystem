@@ -3,6 +3,7 @@ using ClientManagement.Api.DTOs;
 using ClientManagement.Api.Models;
 using ClientManagement.Api.Validation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClientManagement.Api.Controllers;
@@ -20,6 +21,7 @@ public class ClientContactsController : ControllerBase
 
     // GET: api/clients/2/contacts
     [HttpGet]
+    [Authorize(Policy = "PatientRead")]
     public async Task<IActionResult> GetContacts(int clientId)
     {
         var clientExists = await _context.Clients
@@ -44,6 +46,7 @@ public class ClientContactsController : ControllerBase
 
     // POST: api/clients/2/contacts
     [HttpPost]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> CreateContact(
         int clientId,
         CreateClientContactDto dto)
@@ -133,6 +136,7 @@ public class ClientContactsController : ControllerBase
 
     // GET: api/clients/2/contacts/5
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "PatientRead")]
     public async Task<IActionResult> GetContact(
         int clientId,
         int id)
@@ -155,6 +159,7 @@ public class ClientContactsController : ControllerBase
 
     // PUT: api/clients/2/contacts/5
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> UpdateContact(
         int clientId,
         int id,
@@ -236,6 +241,7 @@ public class ClientContactsController : ControllerBase
 
     // DELETE: api/clients/2/contacts/5
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "PatientWrite")]
     public async Task<IActionResult> DeleteContact(
         int clientId,
         int id)
