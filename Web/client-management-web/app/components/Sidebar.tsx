@@ -25,7 +25,7 @@ export default function Sidebar() {
     <aside className="app-sidebar z-40 flex w-full flex-col text-white md:fixed md:inset-y-0 md:left-0 md:w-64">
       <div className="sidebar-divider flex items-center gap-3 border-b px-5 py-4">
         <ClinicIcon />
-        <p className="text-sm font-bold leading-snug">Dental Clinic<br />Management System</p>
+        <p className="min-w-0 whitespace-nowrap text-[13px] font-bold leading-snug">Mercado Dental Clinic<br />Management System</p>
       </div>
       <nav aria-label="Main navigation" className="overflow-x-auto px-3 py-3 md:flex-1 md:overflow-y-auto md:overflow-x-hidden">
         <div className="flex w-max gap-1 md:w-auto md:flex-col">
