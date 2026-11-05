@@ -2,10 +2,12 @@
 "use client";
 
 import { patientFetch, patientError } from "../lib/apiConfig";
+import { philippineMobileFormatHint, philippineMobileValidationError, validatePhilippineMobile } from "../lib/philippineMobile";
 
 import PatientDialog from "../components/PatientDialog";
+import PatientToast, { type PatientToastNotice } from "../components/PatientToast";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface ClientStatus {
@@ -68,6 +70,16 @@ export default function ClientsPage() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const [toast, setToast] = useState<PatientToastNotice | null>(null);
+
+  const showSuccessToast = useCallback((message: string) => {
+    setToast((previous) => ({ id: (previous?.id ?? 0) + 1, message }));
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    setToast((previous) => previous?.id === id ? null : previous);
+  }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -176,6 +188,7 @@ export default function ClientsPage() {
       ...previous,
       [name]: value,
     }));
+    if (name === "phoneNumber") setPhoneError("");
   };
 
   // --------------------------------------------------
@@ -191,6 +204,7 @@ export default function ClientsPage() {
       phoneNumber: "",
       address: "",
     });
+    setPhoneError("");
   };
 
   // --------------------------------------------------
@@ -225,6 +239,14 @@ export default function ClientsPage() {
       return;
     }
 
+    const mobile = form.phoneNumber.trim()
+      ? validatePhilippineMobile(form.phoneNumber)
+      : null;
+    if (mobile && !mobile.valid) {
+      setPhoneError(philippineMobileFormatHint);
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -238,7 +260,7 @@ export default function ClientsPage() {
           lastName: form.lastName.trim(),
           middleName: form.middleName.trim() || null,
           email: form.email.trim() || null,
-          phoneNumber: form.phoneNumber.trim() || null,
+          phoneNumber: mobile?.normalized || null,
           address: form.address.trim() || null,
         }),
       });
@@ -256,7 +278,7 @@ export default function ClientsPage() {
       resetForm();
       setShowAddForm(false);
 
-      alert("Patient added successfully.");
+      showSuccessToast("Patient added successfully.");
     } catch (err) {
       alert(patientError(err, "adding patient"));
     } finally {
@@ -697,9 +719,15 @@ export default function ClientsPage() {
                     type="tel"
                     value={form.phoneNumber}
                     onChange={handleChange}
+                    onBlur={() => setPhoneError(philippineMobileValidationError(form.phoneNumber))}
                     placeholder="09171234567"
+                    inputMode="tel"
+                    aria-invalid={Boolean(phoneError)}
+                    aria-describedby={phoneError ? "phoneNumber-hint phoneNumber-error" : "phoneNumber-hint"}
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 placeholder:text-slate-400 transition"
                   />
+                  <p id="phoneNumber-hint" className="mt-1 text-xs text-slate-500">{philippineMobileFormatHint}</p>
+                  {phoneError && <p id="phoneNumber-error" role="alert" className="mt-1 text-sm text-red-700">{phoneError}</p>}
                 </div>
 
                 {/* ADDRESS */}
@@ -754,6 +782,7 @@ export default function ClientsPage() {
 
         </PatientDialog>
       )}
+      <PatientToast notice={toast} onDismiss={dismissToast} />
     </main>
   );
 }

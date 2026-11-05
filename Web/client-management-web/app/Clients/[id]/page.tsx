@@ -2,10 +2,12 @@
 
 import { patientFetch, patientError } from "../../lib/apiConfig";
 import { formatCivilDate, formatManilaTimestamp } from "../../lib/dateFormat";
+import { philippineMobileFormatHint, philippineMobileValidationError, validatePhilippineMobile } from "../../lib/philippineMobile";
 
 import PatientDialog from "../../components/PatientDialog";
+import PatientToast, { type PatientToastNotice } from "../../components/PatientToast";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { DentalChartPrototype, MedicalHistoryPrototype, TreatmentsPrototype } from "../../components/ClinicalPrototypes";
@@ -350,6 +352,16 @@ export default function ClientProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
   const [showEditForm, setShowEditForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editPhoneError, setEditPhoneError] = useState("");
+  const [toast, setToast] = useState<PatientToastNotice | null>(null);
+
+  const showSuccessToast = useCallback((message: string) => {
+    setToast((previous) => ({ id: (previous?.id ?? 0) + 1, message }));
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    setToast((previous) => previous?.id === id ? null : previous);
+  }, []);
 
   const [editForm, setEditForm] = useState({
   firstName: "",
@@ -364,6 +376,7 @@ export default function ClientProfilePage() {
   // CONTACT MANAGEMENT
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactSaving, setContactSaving] = useState(false);
+  const [contactFormError, setContactFormError] = useState("");
 
   const [contactForm, setContactForm] = useState({
     contactType: "Mobile",
@@ -382,6 +395,7 @@ export default function ClientProfilePage() {
   });
 
   const [editContactSaving, setEditContactSaving] = useState(false);
+  const [editContactFormError, setEditContactFormError] = useState("");
   const [contactToDelete, setContactToDelete] = useState<ClientContact | null>(null);
   const [contactDeleting, setContactDeleting] = useState(false);
   const [deleteContactError, setDeleteContactError] = useState("");
@@ -547,6 +561,7 @@ export default function ClientProfilePage() {
   });
 
   setShowEditForm(true);
+  setEditPhoneError("");
   };
 
   const handleEditChange = (
@@ -558,6 +573,7 @@ export default function ClientProfilePage() {
       ...previous,
       [name]: value,
     }));
+    if (name === "phoneNumber") setEditPhoneError("");
   };
 
   const handleUpdateClient = async (
@@ -579,6 +595,14 @@ export default function ClientProfilePage() {
       return;
     }
 
+    const mobile = editForm.phoneNumber.trim()
+      ? validatePhilippineMobile(editForm.phoneNumber)
+      : null;
+    if (mobile && !mobile.valid) {
+      setEditPhoneError(philippineMobileFormatHint);
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -596,8 +620,7 @@ export default function ClientProfilePage() {
               editForm.middleName.trim() || null,
             email:
               editForm.email.trim() || null,
-            phoneNumber:
-              editForm.phoneNumber.trim() || null,
+            phoneNumber: mobile?.normalized || null,
             address:
               editForm.address.trim() || null,
             statusId: editForm.statusId,
@@ -618,7 +641,7 @@ export default function ClientProfilePage() {
           lastName: editForm.lastName.trim(),
           middleName: editForm.middleName.trim() || null,
           email: editForm.email.trim() || null,
-          phoneNumber: editForm.phoneNumber.trim() || null,
+          phoneNumber: mobile?.normalized || null,
           address: editForm.address.trim() || null,
           statusId: editForm.statusId,
           status: previous.statusId === editForm.statusId
@@ -628,6 +651,7 @@ export default function ClientProfilePage() {
       });
 
       setShowEditForm(false);
+      showSuccessToast("Patient updated successfully.");
 
       try {
         const refreshResponse = await patientFetch(
@@ -639,7 +663,6 @@ export default function ClientProfilePage() {
 
         const refreshedClient: Client = await refreshResponse.json();
         setClient(refreshedClient);
-        alert("Patient updated successfully.");
       } catch (refreshError) {
         patientError(refreshError, "refreshing patient");
         alert(
@@ -674,6 +697,8 @@ export default function ClientProfilePage() {
         [name]: checked,
       }));
 
+      setContactFormError("");
+
       return;
     }
 
@@ -681,6 +706,7 @@ export default function ClientProfilePage() {
       ...previous,
       [name]: value,
     }));
+    if (name === "contactType" || name === "contactValue") setContactFormError("");
   };
 
   const resetContactForm = () => {
@@ -689,6 +715,7 @@ export default function ClientProfilePage() {
       contactValue: "",
       isPrimary: false,
     });
+    setContactFormError("");
   };
 
   const openEditContactForm = (contact: ClientContact) => {
@@ -700,6 +727,7 @@ export default function ClientProfilePage() {
       isPrimary: contact.isPrimary || false,
     });
     setShowEditContactForm(true);
+    setEditContactFormError("");
   };
 
   const handleEditContactChange = (
@@ -719,6 +747,8 @@ export default function ClientProfilePage() {
         [name]: checked,
       }));
 
+      setEditContactFormError("");
+
       return;
     }
 
@@ -726,6 +756,7 @@ export default function ClientProfilePage() {
       ...previous,
       [name]: value,
     }));
+    if (name === "contactType" || name === "contactValue") setEditContactFormError("");
   };
 
   const handleUpdateContact = async (
@@ -747,6 +778,14 @@ export default function ClientProfilePage() {
       return;
     }
 
+    const mobile = editContactForm.contactType === "Mobile"
+      ? validatePhilippineMobile(editContactForm.contactValue)
+      : null;
+    if (mobile && !mobile.valid) {
+      setEditContactFormError(philippineMobileFormatHint);
+      return;
+    }
+
     try {
       setEditContactSaving(true);
 
@@ -760,8 +799,7 @@ export default function ClientProfilePage() {
           body: JSON.stringify({
             contactType:
               editContactForm.contactType,
-            contactValue:
-              editContactForm.contactValue.trim(),
+            contactValue: mobile?.normalized || editContactForm.contactValue.trim(),
             isPrimary:
               editContactForm.isPrimary,
           }),
@@ -802,7 +840,7 @@ export default function ClientProfilePage() {
       setShowEditContactForm(false);
       setEditingContactId(null);
 
-      alert("Contact updated successfully.");
+      showSuccessToast("Contact updated successfully.");
     } catch (err) {
       alert(patientError(err, "updating contact"));
     } finally {
@@ -834,6 +872,7 @@ export default function ClientProfilePage() {
         ),
       } : previous);
       setContactToDelete(null);
+      showSuccessToast("Contact deleted successfully.");
     } catch (err) {
       setDeleteContactError(patientError(err, "deleting contact"));
     } finally {
@@ -870,6 +909,14 @@ export default function ClientProfilePage() {
       return;
     }
 
+    const mobile = contactForm.contactType === "Mobile"
+      ? validatePhilippineMobile(contactForm.contactValue)
+      : null;
+    if (mobile && !mobile.valid) {
+      setContactFormError(philippineMobileFormatHint);
+      return;
+    }
+
     try {
       setContactSaving(true);
 
@@ -883,8 +930,7 @@ export default function ClientProfilePage() {
           body: JSON.stringify({
             contactType:
               contactForm.contactType,
-            contactValue:
-              contactForm.contactValue.trim(),
+            contactValue: mobile?.normalized || contactForm.contactValue.trim(),
             isPrimary:
               contactForm.isPrimary,
           }),
@@ -926,7 +972,7 @@ export default function ClientProfilePage() {
       resetContactForm();
       setShowContactForm(false);
 
-      alert("Contact added successfully.");
+      showSuccessToast("Contact added successfully.");
     } catch (err) {
       alert(patientError(err, "adding contact"));
     } finally {
@@ -1102,6 +1148,7 @@ export default function ClientProfilePage() {
 
       resetAddressForm();
       setShowAddressForm(false);
+      showSuccessToast("Address added successfully.");
     } catch (err) {
       setAddressFormError(patientError(err, "adding address"));
     } finally {
@@ -1179,6 +1226,7 @@ export default function ClientProfilePage() {
       updateAddressState(updatedAddress);
       setShowEditAddressForm(false);
       setEditingAddressId(null);
+      showSuccessToast("Address updated successfully.");
     } catch (err) {
       setEditAddressError(patientError(err, "updating address"));
     } finally {
@@ -1210,6 +1258,7 @@ export default function ClientProfilePage() {
         ),
       } : previous);
       setAddressToDelete(null);
+      showSuccessToast("Address deleted successfully.");
     } catch (err) {
       setDeleteAddressError(patientError(err, "deleting address"));
     } finally {
@@ -1733,7 +1782,7 @@ export default function ClientProfilePage() {
 
       {showEditForm && (
         <PatientDialog titleId="edit-patient-title" onClose={() => setShowEditForm(false)} busy={saving}>
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-2xl p-5 sm:p-7">
 
             {/* MODAL HEADER */}
             <div className="mb-6 flex items-start justify-between">
@@ -1855,8 +1904,15 @@ export default function ClientProfilePage() {
                     name="phoneNumber"
                     value={editForm.phoneNumber}
                     onChange={handleEditChange}
+                    onBlur={() => setEditPhoneError(philippineMobileValidationError(editForm.phoneNumber))}
+                    inputMode="tel"
+                    placeholder="09171234567"
+                    aria-invalid={Boolean(editPhoneError)}
+                    aria-describedby={editPhoneError ? "edit-phoneNumber-hint edit-phoneNumber-error" : "edit-phoneNumber-hint"}
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
                   />
+                  <p id="edit-phoneNumber-hint" className="mt-1 text-xs text-slate-500">{philippineMobileFormatHint}</p>
+                  {editPhoneError && <p id="edit-phoneNumber-error" role="alert" className="mt-1 text-sm text-red-700">{editPhoneError}</p>}
                 </div>
 
                 {/* ADDRESS */}
@@ -2024,13 +2080,21 @@ export default function ClientProfilePage() {
                   <input
                     id="contactValue"
                     name="contactValue"
-                    type="text"
+                    type={contactForm.contactType === "Mobile" ? "tel" : "text"}
                     value={contactForm.contactValue}
                     onChange={handleContactChange}
+                    onBlur={() => {
+                      if (contactForm.contactType === "Mobile") setContactFormError(philippineMobileValidationError(contactForm.contactValue));
+                    }}
                     required
-                    placeholder="09171234567"
+                    placeholder={contactForm.contactType === "Mobile" ? "09171234567" : undefined}
+                    inputMode={contactForm.contactType === "Mobile" ? "tel" : undefined}
+                    aria-invalid={Boolean(contactFormError)}
+                    aria-describedby={contactForm.contactType === "Mobile" ? (contactFormError ? "contactValue-hint contactValue-error" : "contactValue-hint") : undefined}
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
                   />
+                  {contactForm.contactType === "Mobile" && <p id="contactValue-hint" className="mt-1 text-xs text-slate-500">{philippineMobileFormatHint}</p>}
+                  {contactFormError && <p id="contactValue-error" role="alert" className="mt-1 text-sm text-red-700">{contactFormError}</p>}
 
                 </div>
 
@@ -2209,14 +2273,23 @@ export default function ClientProfilePage() {
                 </label>
 
                 <input
-                  type="text"
+                  type={editContactForm.contactType === "Mobile" ? "tel" : "text"}
                   id="edit-contactValue"
                   name="contactValue"
                   value={editContactForm.contactValue}
                   onChange={handleEditContactChange}
+                  onBlur={() => {
+                    if (editContactForm.contactType === "Mobile") setEditContactFormError(philippineMobileValidationError(editContactForm.contactValue));
+                  }}
                   required
+                  placeholder={editContactForm.contactType === "Mobile" ? "09171234567" : undefined}
+                  inputMode={editContactForm.contactType === "Mobile" ? "tel" : undefined}
+                  aria-invalid={Boolean(editContactFormError)}
+                  aria-describedby={editContactForm.contactType === "Mobile" ? (editContactFormError ? "edit-contactValue-hint edit-contactValue-error" : "edit-contactValue-hint") : undefined}
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-black"
                 />
+                {editContactForm.contactType === "Mobile" && <p id="edit-contactValue-hint" className="mt-1 text-xs text-slate-500">{philippineMobileFormatHint}</p>}
+                {editContactFormError && <p id="edit-contactValue-error" role="alert" className="mt-1 text-sm text-red-700">{editContactFormError}</p>}
               </div>
 
               {/* PRIMARY */}
@@ -2419,6 +2492,8 @@ export default function ClientProfilePage() {
           </div>
         </PatientDialog>
       )}
+
+      <PatientToast notice={toast} onDismiss={dismissToast} />
 
     </main>
   );

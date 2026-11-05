@@ -1,6 +1,7 @@
 using ClientManagement.Api.Data;
 using ClientManagement.Api.DTOs;
 using ClientManagement.Api.Models;
+using ClientManagement.Api.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,13 +57,22 @@ public class ClientsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateClient(CreateClientDto dto)
     {
+        if (!PhilippineMobileValidator.TryNormalize(dto.PhoneNumber, out var phoneNumber))
+        {
+            return BadRequest(new
+            {
+                message = "Phone Number must use 09XXXXXXXXX, +639XXXXXXXXX, or 639XXXXXXXXX.",
+                field = "phoneNumber"
+            });
+        }
+
         var client = new Client
         {
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             MiddleName = dto.MiddleName,
             Email = dto.Email,
-            PhoneNumber = dto.PhoneNumber,
+            PhoneNumber = phoneNumber,
             Address = dto.Address,
 
             // New clients are Active by default
@@ -122,6 +132,15 @@ public class ClientsController : ControllerBase
             });
         }
 
+        if (!PhilippineMobileValidator.TryNormalize(dto.PhoneNumber, out var phoneNumber))
+        {
+            return BadRequest(new
+            {
+                message = "Phone Number must use 09XXXXXXXXX, +639XXXXXXXXX, or 639XXXXXXXXX.",
+                field = "phoneNumber"
+            });
+        }
+
         client.FirstName = dto.FirstName.Trim();
         client.LastName = dto.LastName.Trim();
         client.MiddleName = string.IsNullOrWhiteSpace(dto.MiddleName)
@@ -132,9 +151,9 @@ public class ClientsController : ControllerBase
             ? null
             : dto.Email.Trim();
 
-        client.PhoneNumber = string.IsNullOrWhiteSpace(dto.PhoneNumber)
+        client.PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber)
             ? null
-            : dto.PhoneNumber.Trim();
+            : phoneNumber;
 
         client.Address = string.IsNullOrWhiteSpace(dto.Address)
             ? null

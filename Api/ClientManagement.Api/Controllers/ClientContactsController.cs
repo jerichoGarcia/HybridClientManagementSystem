@@ -1,6 +1,7 @@
 using ClientManagement.Api.Data;
 using ClientManagement.Api.DTOs;
 using ClientManagement.Api.Models;
+using ClientManagement.Api.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,11 +75,26 @@ public class ClientContactsController : ControllerBase
             });
         }
 
+        var contactValue = dto.ContactValue.Trim();
+        if (PhilippineMobileValidator.IsMobileContactType(dto.ContactType))
+        {
+            if (!PhilippineMobileValidator.TryNormalize(dto.ContactValue, out var normalizedMobile))
+            {
+                return BadRequest(new
+                {
+                    message = "Mobile contact information must use 09XXXXXXXXX, +639XXXXXXXXX, or 639XXXXXXXXX.",
+                    field = "contactValue"
+                });
+            }
+
+            contactValue = normalizedMobile!;
+        }
+
         var contact = new ClientContact
         {
             ClientId = clientId,
             ContactType = dto.ContactType.Trim(),
-            ContactValue = dto.ContactValue.Trim(),
+            ContactValue = contactValue,
             IsPrimary = dto.IsPrimary,
             DateCreated = DateTime.UtcNow
         };
@@ -173,8 +189,23 @@ public class ClientContactsController : ControllerBase
             });
         }
 
+        var contactValue = updatedContact.ContactValue.Trim();
+        if (PhilippineMobileValidator.IsMobileContactType(updatedContact.ContactType))
+        {
+            if (!PhilippineMobileValidator.TryNormalize(updatedContact.ContactValue, out var normalizedMobile))
+            {
+                return BadRequest(new
+                {
+                    message = "Mobile contact information must use 09XXXXXXXXX, +639XXXXXXXXX, or 639XXXXXXXXX.",
+                    field = "contactValue"
+                });
+            }
+
+            contactValue = normalizedMobile!;
+        }
+
         contact.ContactType = updatedContact.ContactType.Trim();
-        contact.ContactValue = updatedContact.ContactValue.Trim();
+        contact.ContactValue = contactValue;
 
         if (updatedContact.IsPrimary)
         {
